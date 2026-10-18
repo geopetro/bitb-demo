@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  BROWSER-IN-THE-BROWSER (BitB) SIMULATION  -  EDUCATIONAL / PoC
+  ----------------------------------------------------------------------------
+  Demonstrates the BitB technique first documented by mr.d0x (2022):
+  a fake OS window rendered INSIDE a web page that imitates a real popup
+  browser window, used in phishing lures to spoof the address bar.
+
+  Intended use: security awareness training, red-team labs, defender
+  tabletop exercises. Operators running authorized engagements
+  wire it up to their own framework (e.g. GoPhish) separately.
+
+  Not for unauthorized use. See repository README for terms.
+============================================================================
+-->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link id="tab-icon" rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAYAgIAQAAAAAABoKAAAZgAAAEhIEAAAAAAA6A0AAM4oAAAwMBAAAAAAAGgGAAC2NgAAICAQAAAAAADoAgAAHj0AABgYEAAAAAAA6AEAAAZAAAAQEBAAAAAAACgBAADuQQAAKAAAAIAAAAAAAQAAAQAEAAAAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8A76QAAAC5/wAAun8AIlDyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8AAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAKAAAAEgAAACQAAAAAQAEAAAAAACADQAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8A76QAAAC5/wAAun8AIlDyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAAREREREREREREREREREREREQAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAD///////////8AAAD///////////8AAAD///////////8AAAD///////////8AAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAoAAAAMAAAAGAAAAABAAQAAAAAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///wDvpAAAALn/AAC6fwAiUPIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERAAAAYAAAAAAAAABgAAAAAAAAAGAAAAAAAAAAYAAAAAAAAABgAAA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" />
+    <title>Document1 - Protected View</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background: #f3f2f1;
+        }
+
+        /* =================================================================
+           BACKGROUND LURE — a blurred fake Excel workbook
+           ================================================================= */
+        #excel-lure {
+            position: fixed;
+            inset: 0;
+            filter: blur(4px);
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .xl-titlebar {
+            height: 30px;
+            background: #107c41;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            justify-content: space-between;
+        }
+        .xl-titlebar .xl-winbtns { letter-spacing: 14px; }
+
+        .xl-ribbon {
+            height: 94px;
+            background: #f3f2f1;
+            border-bottom: 1px solid #d0cece;
+            padding: 6px 14px;
+        }
+        .xl-ribbon .tabs {
+            display: flex;
+            gap: 18px;
+            font-size: 12px;
+            color: #444;
+            margin-bottom: 8px;
+        }
+        .xl-ribbon .tabs .active {
+            color: #107c41;
+            font-weight: 600;
+            border-bottom: 2px solid #107c41;
+            padding-bottom: 4px;
+        }
+        .xl-ribbon .groups {
+            display: flex;
+            gap: 10px;
+            height: 56px;
+        }
+        .xl-ribbon .groups .btn {
+            width: 46px;
+            background: #fff;
+            border: 1px solid #e1dfdd;
+            border-radius: 3px;
+        }
+
+        .xl-formula {
+            height: 24px;
+            background: #fff;
+            border-bottom: 1px solid #d0cece;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #888;
+            padding: 0 10px;
+        }
+        .xl-formula .cellref {
+            width: 54px;
+            border-right: 1px solid #d0cece;
+            color: #333;
+        }
+
+        .xl-grid { width: 100%; border-collapse: collapse; }
+        .xl-grid th, .xl-grid td {
+            border: 1px solid #e1dfdd;
+            height: 22px;
+            font-size: 12px;
+            padding: 0 6px;
+            text-align: right;
+            color: #333;
+            background: #fff;
+            min-width: 92px;
+        }
+        .xl-grid th {
+            background: #f3f2f1;
+            color: #666;
+            text-align: center;
+            font-weight: 500;
+        }
+        .xl-grid td.rowhdr {
+            background: #f3f2f1;
+            color: #666;
+            text-align: center;
+            min-width: 34px;
+        }
+        .xl-grid td.text { text-align: left; }
+
+        .xl-tabs {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 26px;
+            background: #f3f2f1;
+            border-top: 1px solid #d0cece;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 16px;
+            font-size: 12px;
+            color: #444;
+        }
+        .xl-tabs .active { font-weight: 600; color: #107c41; }
+
+        /* =================================================================
+           BACKGROUND LURE — a blurred fake Word document
+           ================================================================= */
+        #word-lure {
+            position: fixed;
+            inset: 0;
+            filter: blur(4px);
+            user-select: none;
+            pointer-events: none;
+            background: #f3f2f1;
+        }
+        .wd-titlebar {
+            height: 30px;
+            background: #2b579a;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            justify-content: space-between;
+        }
+        .wd-titlebar .wd-winbtns { letter-spacing: 14px; }
+
+        .wd-ribbon {
+            height: 94px;
+            background: #f3f2f1;
+            border-bottom: 1px solid #d0cece;
+            padding: 6px 14px;
+        }
+        .wd-ribbon .tabs {
+            display: flex;
+            gap: 18px;
+            font-size: 12px;
+            color: #444;
+            margin-bottom: 8px;
+        }
+        .wd-ribbon .tabs .active {
+            color: #2b579a;
+            font-weight: 600;
+            border-bottom: 2px solid #2b579a;
+            padding-bottom: 4px;
+        }
+        .wd-ribbon .groups {
+            display: flex;
+            gap: 10px;
+            height: 56px;
+        }
+        .wd-ribbon .groups .btn {
+            width: 46px;
+            background: #fff;
+            border: 1px solid #e1dfdd;
+            border-radius: 3px;
+        }
+
+        .wd-canvas {
+            position: absolute;
+            top: 124px; /* 30px title + 94px ribbon */
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #e6e6e6;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            padding-top: 26px;
+        }
+        .wd-page {
+            width: min(820px, 72%);
+            background: #fff;
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
+            padding: 64px 72px;
+            font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+            color: #242424;
+            line-height: 1.55;
+            font-size: 15px;
+        }
+        .wd-page .wd-h1 {
+            font-size: 24px;
+            color: #1f3864;
+            margin: 0 0 4px;
+            font-weight: 700;
+        }
+        .wd-page .wd-sub {
+            color: #6b6b6b;
+            margin: 0 0 24px;
+            font-size: 13px;
+        }
+        .wd-page p { margin: 0 0 14px; text-align: justify; }
+        .wd-page h2 { font-size: 16px; color: #2b579a; margin: 22px 0 8px; }
+
+        /* =================================================================
+           BACKGROUND LURE — a blurred fake PowerPoint deck
+           ================================================================= */
+        #ppt-lure {
+            position: fixed;
+            inset: 0;
+            filter: blur(4px);
+            user-select: none;
+            pointer-events: none;
+            background: #f3f2f1;
+        }
+        .pp-titlebar {
+            height: 30px;
+            background: #b7472a;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            justify-content: space-between;
+        }
+        .pp-titlebar .pp-winbtns { letter-spacing: 14px; }
+
+        .pp-ribbon {
+            height: 94px;
+            background: #f3f2f1;
+            border-bottom: 1px solid #d0cece;
+            padding: 6px 14px;
+        }
+        .pp-ribbon .tabs {
+            display: flex;
+            gap: 18px;
+            font-size: 12px;
+            color: #444;
+            margin-bottom: 8px;
+        }
+        .pp-ribbon .tabs .active {
+            color: #b7472a;
+            font-weight: 600;
+            border-bottom: 2px solid #b7472a;
+            padding-bottom: 4px;
+        }
+        .pp-ribbon .groups {
+            display: flex;
+            gap: 10px;
+            height: 56px;
+        }
+        .pp-ribbon .groups .btn {
+            width: 46px;
+            background: #fff;
+            border: 1px solid #e1dfdd;
+            border-radius: 3px;
+        }
+
+        .pp-canvas {
+            position: absolute;
+            top: 124px; /* 30px title + 94px ribbon */
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ededed;
+            overflow: hidden;
+            display: flex;
+        }
+        .pp-thumbnails {
+            width: 160px;
+            background: #f5f5f5;
+            border-right: 1px solid #d0d0d0;
+            padding: 14px 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .pp-thumb {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .pp-thumb .pp-thumb-num {
+            color: #555;
+            font-size: 11px;
+            width: 14px;
+            text-align: right;
+            padding-top: 4px;
+            flex: 0 0 auto;
+        }
+        .pp-thumb .pp-thumb-slide {
+            flex: 1;
+            aspect-ratio: 16 / 9;
+            background: #fff;
+            border: 1px solid #c0c0c0;
+            border-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+            position: relative;
+            padding: 6px 7px;
+            overflow: hidden;
+        }
+        .pp-thumb.active .pp-thumb-slide {
+            border: 2px solid #b7472a;
+            box-shadow: 0 0 0 1px #b7472a, 0 1px 3px rgba(0,0,0,0.18);
+        }
+        .pp-thumb .pp-thumb-title {
+            font-weight: 700;
+            color: #b7472a;
+            font-size: 6px;
+            line-height: 1.2;
+        }
+        .pp-thumb .pp-thumb-line {
+            margin-top: 3px;
+            height: 2px;
+            background: #d8d8d8;
+            width: 70%;
+            border-radius: 1px;
+        }
+        .pp-thumb .pp-thumb-line.short { width: 45%; }
+
+        .pp-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 28px 20px;
+            overflow: hidden;
+        }
+        .pp-slide {
+            width: min(880px, 96%);
+            aspect-ratio: 16 / 9;
+            background: #fff;
+            box-shadow: 0 4px 22px rgba(0, 0, 0, 0.22);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 60px;
+            font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+            color: #242424;
+        }
+        .pp-slide .pp-title {
+            font-size: 44px;
+            font-weight: 700;
+            color: #2a2a2a;
+            margin: 0;
+            letter-spacing: 0.2px;
+        }
+        .pp-slide .pp-divider {
+            width: 90px;
+            height: 4px;
+            background: #b7472a;
+            margin: 18px 0 20px;
+            border-radius: 2px;
+        }
+        .pp-slide .pp-sub {
+            font-size: 20px;
+            color: #555;
+            margin: 0 0 6px;
+            font-weight: 400;
+        }
+        .pp-slide .pp-byline {
+            font-size: 13px;
+            color: #888;
+            margin: 10px 0 0;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+        .pp-slide .pp-page {
+            position: absolute;
+            right: 16px;
+            bottom: 10px;
+            font-size: 11px;
+            color: #999;
+        }
+        .pp-slide .pp-accent {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 6px;
+            background: #b7472a;
+        }
+
+        /* =================================================================
+           BACKGROUND LURE — a blurred fake OneNote notebook
+           ================================================================= */
+        #onenote-lure {
+            position: fixed;
+            inset: 0;
+            filter: blur(4px);
+            user-select: none;
+            pointer-events: none;
+            background: #f3f2f1;
+        }
+        .on-titlebar {
+            height: 30px;
+            background: #80397b;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            justify-content: space-between;
+        }
+        .on-titlebar .on-winbtns { letter-spacing: 14px; }
+        .on-ribbon {
+            height: 94px;
+            background: #f3f2f1;
+            border-bottom: 1px solid #d0cece;
+            padding: 6px 14px;
+        }
+        .on-ribbon .tabs {
+            display: flex; gap: 18px; font-size: 12px; color: #444; margin-bottom: 8px;
+        }
+        .on-ribbon .tabs .active {
+            color: #80397b; font-weight: 600;
+            border-bottom: 2px solid #80397b; padding-bottom: 4px;
+        }
+        .on-ribbon .groups { display: flex; gap: 10px; height: 56px; }
+        .on-ribbon .groups .btn {
+            width: 46px; background: #fff; border: 1px solid #e1dfdd; border-radius: 3px;
+        }
+        /* Section tabs row (colored notebook sections) just under the ribbon. */
+        .on-sections {
+            display: flex; gap: 2px; height: 26px; align-items: flex-end;
+            background: #ececec; padding: 0 14px; border-bottom: 1px solid #d0cece;
+        }
+        .on-sections .sec {
+            padding: 4px 14px 6px; font-size: 12px; color: #fff;
+            border-top-left-radius: 3px; border-top-right-radius: 3px;
+        }
+        .on-sections .sec.active {
+            background: #fff; color: #333; font-weight: 600;
+            border: 1px solid #d0cece; border-bottom: none; margin-bottom: -1px;
+        }
+        .on-sections .sec.s1 { background: #2fa84f; }
+        .on-sections .sec.s2 { background: #2b78b1; }
+        .on-sections .sec.s3 { background: #d16c0a; }
+        .on-sections .sec.s4 { background: #b4322a; }
+        .on-sections .sec.s5 { background: #80397b; }
+        .on-canvas {
+            position: absolute;
+            top: 150px; /* 30 title + 94 ribbon + 26 sections */
+            left: 0; right: 0; bottom: 0;
+            background: #fffdf4; /* classic OneNote cream */
+            display: flex;
+            overflow: hidden;
+        }
+        .on-page {
+            flex: 1; padding: 36px 56px; font-family: "Calibri", "Segoe UI", Arial, sans-serif; color: #222;
+        }
+        .on-page .on-title {
+            font-size: 28px; font-weight: 600; color: #202020; margin: 0;
+            border-bottom: 1px dotted #c0b89a; padding-bottom: 4px;
+        }
+        .on-page .on-date { font-size: 11px; color: #888; margin: 4px 0 20px; }
+        .on-page p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; }
+        .on-page ul { margin: 0 0 10px; padding-left: 22px; font-size: 14px; line-height: 1.7; }
+        .on-pageslist {
+            width: 180px; border-left: 1px solid #e2dcc4; background: #faf5e2; padding: 12px 10px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .on-pageslist .pg { font-size: 12px; color: #333; padding: 4px 6px; border-radius: 2px; }
+        .on-pageslist .pg.active { background: #fff; border: 1px solid #d7ceae; font-weight: 600; }
+
+        /* =================================================================
+           BACKGROUND LURE — a blurred fake Visio drawing
+           ================================================================= */
+        #visio-lure {
+            position: fixed;
+            inset: 0;
+            filter: blur(4px);
+            user-select: none;
+            pointer-events: none;
+            background: #f3f2f1;
+        }
+        .vs-titlebar {
+            height: 30px; background: #3955a3; color: #fff;
+            display: flex; align-items: center; padding: 0 12px;
+            font-size: 13px; justify-content: space-between;
+        }
+        .vs-titlebar .vs-winbtns { letter-spacing: 14px; }
+        .vs-ribbon {
+            height: 94px; background: #f3f2f1; border-bottom: 1px solid #d0cece; padding: 6px 14px;
+        }
+        .vs-ribbon .tabs { display: flex; gap: 18px; font-size: 12px; color: #444; margin-bottom: 8px; }
+        .vs-ribbon .tabs .active {
+            color: #3955a3; font-weight: 600;
+            border-bottom: 2px solid #3955a3; padding-bottom: 4px;
+        }
+        .vs-ribbon .groups { display: flex; gap: 10px; height: 56px; }
+        .vs-ribbon .groups .btn {
+            width: 46px; background: #fff; border: 1px solid #e1dfdd; border-radius: 3px;
+        }
+        .vs-canvas {
+            position: absolute;
+            top: 124px; left: 0; right: 0; bottom: 0;
+            background: #e9edf4; display: flex; overflow: hidden;
+        }
+        /* Left stencil panel with a few shape rows. */
+        .vs-stencils {
+            width: 170px; background: #f6f7fb; border-right: 1px solid #d0d4de;
+            padding: 12px 10px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .vs-stencils .shape {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 11px; color: #333;
+        }
+        .vs-stencils .shape .sh {
+            width: 36px; height: 22px; background: #cfd8ef; border: 1px solid #7a8dc4;
+        }
+        .vs-stencils .shape .sh.round { border-radius: 11px; }
+        .vs-stencils .shape .sh.diamond {
+            width: 22px; height: 22px; transform: rotate(45deg); background: #e6d4a6; border-color: #b89845;
+        }
+        .vs-stencils .shape .sh.oval { border-radius: 11px; background: #d4e8d1; border-color: #6ea269; }
+        /* Drawing surface with a subtle grid. */
+        .vs-sheet {
+            flex: 1; position: relative; background:
+                linear-gradient(#dde3ee 1px, transparent 1px) 0 0 / 24px 24px,
+                linear-gradient(90deg, #dde3ee 1px, transparent 1px) 0 0 / 24px 24px,
+                #fff;
+            padding: 32px;
+        }
+        .vs-sheet .shp {
+            position: absolute; background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: #333;
+            font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+        }
+        .vs-sheet .shp.start {
+            left: 44px; top: 44px; width: 110px; height: 38px;
+            border: 2px solid #6ea269; border-radius: 19px; background: #eaf5e8;
+        }
+        .vs-sheet .shp.proc {
+            left: 44px; top: 120px; width: 160px; height: 46px;
+            border: 2px solid #7a8dc4; background: #e8edf9;
+        }
+        .vs-sheet .shp.dec {
+            left: 60px; top: 210px; width: 128px; height: 70px;
+            border: 2px solid #b89845; background: #faf1d7;
+            transform: rotate(45deg);
+        }
+        .vs-sheet .shp.dec span { transform: rotate(-45deg); }
+        .vs-sheet .shp.proc2 {
+            left: 260px; top: 220px; width: 150px; height: 46px;
+            border: 2px solid #7a8dc4; background: #e8edf9;
+        }
+        .vs-sheet .shp.end {
+            left: 44px; top: 320px; width: 110px; height: 38px;
+            border: 2px solid #b4322a; border-radius: 19px; background: #f7e1df;
+        }
+        /* Connectors between the shapes (positioned absolutely as thin bars). */
+        .vs-sheet .arrow {
+            position: absolute; background: #556;
+        }
+        .vs-sheet .arrow.v1 { left: 98px; top: 84px; width: 2px; height: 34px; }
+        .vs-sheet .arrow.v2 { left: 125px; top: 168px; width: 2px; height: 42px; }
+        .vs-sheet .arrow.v3 { left: 98px; top: 282px; width: 2px; height: 36px; }
+        .vs-sheet .arrow.h1 { left: 190px; top: 243px; width: 70px; height: 2px; }
+
+        /* =================================================================
+           LURE SELECTOR — switch which blurred document is shown behind the
+           popup by changing data-lure on <body>:
+           "1" = Excel, "2" = Word, "3" = PowerPoint, "4" = OneNote, "5" = Visio.
+           ================================================================= */
+        #excel-lure, #word-lure, #ppt-lure, #onenote-lure, #visio-lure { display: none; }
+        body[data-lure="1"] #excel-lure   { display: block; }
+        body[data-lure="2"] #word-lure    { display: block; }
+        body[data-lure="3"] #ppt-lure     { display: block; }
+        body[data-lure="4"] #onenote-lure { display: block; }
+        body[data-lure="5"] #visio-lure   { display: block; }
+
+        /* =================================================================
+           "PROTECTED DOCUMENT" DIM OVERLAY
+           ================================================================= */
+        #dim {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 10;
+        }
+
+        /* =================================================================
+           THE FAKE BROWSER WINDOW (the BitB core)
+           ================================================================= */
+        #bitb {
+            position: fixed;
+            z-index: 20;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 620px;
+            background: #fff;
+            border-radius: 8px 8px 6px 6px;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+            overflow: hidden;
+        }
+
+        /* Fake OS window title bar (shared) */
+        #bitb .win-titlebar {
+            height: 34px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            cursor: default;
+            touch-action: none; /* let the title bar be dragged by touch, not scrolled */
+        }
+        #bitb .win-titlebar .title {
+            font-size: 12.5px;
+            color: #202124;
+            margin-left: 8px;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #bitb .win-titlebar .favicon {
+            width: 16px; height: 16px; border-radius: 3px;
+        }
+
+        /* --- Default chrome = Windows, so the controls always appear even if
+               OS detection does not run. macOS rules below override this. --- */
+        #bitb .win-titlebar { background: #dadce0; }
+        #bitb .mac-ctrls { display: none; }
+        #bitb .win-ctrls { display: flex; gap: 2px; order: 3; }
+        #bitb .win-ctrls span {
+            width: 30px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #444;
+            border-radius: 3px;
+        }
+        #bitb .win-ctrls .close:hover { background: #e81123; color: #fff; }
+        #bitb .win-ctrls span:hover { background: rgba(0,0,0,0.08); }
+
+        /* --- Windows-style chrome: controls on the right --- */
+        #bitb.os-win .win-titlebar { background: #dadce0; }
+        #bitb.os-win .mac-ctrls { display: none; }
+        #bitb.os-win .win-ctrls { display: flex; gap: 2px; order: 3; }
+        #bitb.os-win .win-ctrls span {
+            width: 30px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #444;
+            border-radius: 3px;
+        }
+        #bitb.os-win .win-ctrls .close:hover { background: #e81123; color: #fff; }
+        #bitb.os-win .win-ctrls span:hover { background: rgba(0,0,0,0.08); }
+
+        /* --- macOS-style chrome: traffic-light dots on the left --- */
+        #bitb.os-mac .win-titlebar {
+            background: #e8e6e4;
+            height: 36px;
+            border-bottom: 1px solid #d3d0cd;
+        }
+        #bitb.os-mac .win-ctrls { display: none; }
+        #bitb.os-mac .favicon { display: none; }
+        #bitb.os-mac .title {
+            text-align: center;
+            margin-left: 0;
+            margin-right: 52px; /* offset the left traffic-lights so the title reads as centered */
+            font-weight: 500;
+            color: #3b3b3b;
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+        }
+        #bitb.os-mac .mac-ctrls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            order: 0; /* keep the traffic lights on the far left (before the title) */
+            margin-right: 4px;
+        }
+        #bitb.os-mac .mac-ctrls span {
+            position: relative;
+            flex: 0 0 auto;        /* never let the dots shrink to nothing */
+            width: 12px;
+            height: 12px;
+            min-width: 12px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            line-height: 1;
+            color: transparent; /* glyphs are invisible until the cluster is hovered */
+            font-family: -apple-system, "SF Pro Text", Arial, sans-serif;
+        }
+        #bitb.os-mac .mac-ctrls .close { background-color: #ff5f57; border: 1px solid #e0443e; }
+        #bitb.os-mac .mac-ctrls .min   { background-color: #febc2e; border: 1px solid #dea123; }
+        #bitb.os-mac .mac-ctrls .max   { background-color: #28c840; border: 1px solid #1aad2b; }
+
+        /* Real macOS reveals the dark glyphs only while the cluster is hovered. */
+        #bitb.os-mac .mac-ctrls .close::before { content: "\2715"; }   /* heavy multiplication X */
+        #bitb.os-mac .mac-ctrls .min::before   { content: "\2212"; }   /* minus sign */
+        #bitb.os-mac .mac-ctrls:hover .close { color: rgba(74, 0, 2, 0.55); }
+        #bitb.os-mac .mac-ctrls:hover .min   { color: rgba(90, 48, 0, 0.6); }
+
+        /* Green button shows two outward-pointing triangles (enter full screen). */
+        #bitb.os-mac .mac-ctrls .max::before,
+        #bitb.os-mac .mac-ctrls .max::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            opacity: 0;
+        }
+        #bitb.os-mac .mac-ctrls .max::before {
+            top: 2px; left: 2px;
+            border-width: 4px 4px 0 0;
+            border-color: rgba(0, 56, 0, 0.6) transparent transparent transparent;
+        }
+        #bitb.os-mac .mac-ctrls .max::after {
+            bottom: 2px; right: 2px;
+            border-width: 0 0 4px 4px;
+            border-color: transparent transparent rgba(0, 56, 0, 0.6) transparent;
+        }
+        #bitb.os-mac .mac-ctrls:hover .max::before,
+        #bitb.os-mac .mac-ctrls:hover .max::after { opacity: 1; }
+
+        /* Fake browser toolbar + address bar */
+        #bitb .browser-bar {
+            height: 42px;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        #bitb .urlbar {
+            flex: 1;
+            min-width: 0; /* allow the bar to shrink so the URL can truncate */
+            overflow: hidden;
+            height: 28px;
+            background: #fff;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 12.5px;
+            color: #202124;
+            border: 1px solid #e0e0e0;
+            cursor: text; /* hints that the bar is clickable like a real one */
+        }
+        /* Hidden readonly input swapped in on focus so the full URL can be
+           selected and scrolled through — but never modified or deleted. */
+        #bitb .urlbar .url-input {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            border: 0;
+            outline: none;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            padding: 0;
+            display: none;
+        }
+        #bitb .urlbar.editing .url-text { display: none; }
+        #bitb .urlbar.editing .url-input { display: block; }
+        #bitb .urlbar .lock {
+            color: #5f6368;
+            margin-right: 7px;
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            line-height: 0;
+        }
+        #bitb .urlbar .lock svg { display: block; }
+        #bitb .urlbar .url-text {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #bitb .urlbar .host { color: #202124; }
+        #bitb .urlbar .path { color: #5f6368; }
+        #bitb .menu-dots { color: #5f6368; font-size: 18px; }
+
+        /* =================================================================
+           DARK THEME — applied when the OS/browser reports a dark color
+           scheme (prefers-color-scheme: dark). Toggled by a .theme-dark
+           class on #bitb set from matchMedia at load.
+           ================================================================= */
+        /* Windows dark title bar */
+        #bitb.theme-dark.os-win .win-titlebar { background: #2b2b2b; }
+        #bitb.theme-dark.os-win .win-ctrls span { color: #e8eaed; }
+        #bitb.theme-dark.os-win .win-ctrls span:hover { background: rgba(255,255,255,0.10); }
+        /* Keep the close button red on hover in dark theme (the span:hover rule
+           above otherwise outranks the light-theme .close:hover red rule). */
+        #bitb.theme-dark.os-win .win-ctrls .close:hover { background: #e81123; color: #fff; }
+
+        /* macOS dark title bar */
+        #bitb.theme-dark.os-mac .win-titlebar {
+            background: #3a3a3c;
+            border-bottom: 1px solid #2a2a2c;
+        }
+        #bitb.theme-dark.os-mac .title { color: #e3e3e3; }
+
+        /* Shared dark chrome: title text, browser bar, address bar */
+        #bitb.theme-dark .win-titlebar .title { color: #e8eaed; }
+        #bitb.theme-dark .browser-bar {
+            background: #292a2d;
+            border-bottom: 1px solid #3c4043;
+        }
+        #bitb.theme-dark .urlbar {
+            background: #202124;
+            border: 1px solid #5f6368;
+            color: #e8eaed;
+        }
+        #bitb.theme-dark .urlbar .lock { color: #9aa0a6; }
+        #bitb.theme-dark .urlbar .host { color: #e8eaed; }
+        #bitb.theme-dark .urlbar .path { color: #9aa0a6; }
+        #bitb.theme-dark .menu-dots { color: #9aa0a6; }
+
+        /* The login content area */
+        #bitb .viewport {
+            width: 100%;
+            height: calc(100% - 76px);
+            border: 0;
+            display: block;
+        }
+
+        /* =================================================================
+           RESPONSIVE — shrink the fake window on small / mobile screens.
+           ================================================================= */
+        @media (max-width: 560px) {
+            #bitb {
+                width: 94vw;
+                height: 86vh;
+                max-height: 620px;
+                min-height: 430px;
+            }
+            /* Keep the action button inside the narrower window. */
+            #login-host #btnPlace,
+            #login-host #btnSignInLocation {
+                margin-left: 0;
+                padding-right: 22px;
+                text-align: right;
+            }
+            #login-host #btnSend,
+            #login-host #btnSignIn { margin-left: 0; }
+            #login-host #email,
+            #login-host #password { width: calc(100% - 52px); }
+        }
+
+        /* =================================================================
+           INLINED MICROSOFT SIGN-IN
+           ================================================================= */
+        #login-host {
+            position: relative;
+            overflow: hidden; /* footer pins to this; scrolling happens in #login-scroll */
+            background: #fff; /* full-window white, like the real narrow sign-in */
+            font-family: "Segoe UI", "Helvetica Neue", "Lucida Grande", "Roboto";
+        }
+        /* The scrollable region = the whole fake window. The panel lives inside it,
+           so when it's tall the window scrolls (the panel itself does not). */
+        #login-host #login-scroll {
+            position: relative;
+            height: calc(100% - 44px);   /* leave room for the full-width window footer below */
+            overflow: hidden;            /* like the real sign-in: a stable clip (no scrollbar) during the slide */
+            padding-bottom: 48px;        /* white space to scroll past, below the box */
+        }
+        /* Only become scrollable while the troubleshooting box is open, so the
+           sign-in slide animation runs in a plain overflow:hidden context. */
+        #login-host #login-scroll.ts-scrolling { overflow-y: auto; overflow-x: hidden; }
+        #login-host * { font-family: "Segoe UI", "Helvetica Neue", "Lucida Grande", "Roboto"; }
+        /* Fill the whole window (no floating card) since the fake popup is ~500px wide. */
+        #loginForm {
+            background-color: #fff;
+            box-shadow: none;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            padding: 8px 10px 10px;
+            overflow: hidden;
+        }
+        #login-host #signIn { margin-left: 36px; margin-top: 6px; font-weight: 600; font-size: 25px; line-height: 1.2; }
+        #login-host #email { width: 85%; height: 40px; margin-top: -10px; margin-left: 36px; border: none; border-bottom: 1px solid rgba(0,0,0,0.7); }
+        #login-host #email:focus { border-bottom: 1px solid #0067b8; }
+        #login-host #password { width: 85%; height: 40px; margin-top: -10px; margin-left: 36px; border: none; border-bottom: 1px solid rgba(0,0,0,0.7); }
+        #login-host #password:focus { border-bottom: 1px solid #0067b8; }
+        #login-host #ForgotPwd, #login-host #NoAccount { margin-left: 36px; margin-top: 13px; font-size: 13px; }
+        #login-host #signInOptions { margin-left: 36px; font-size: 13px; }
+        #login-host #btnSend, #login-host #btnSignIn {
+            height: 33px; width: 108px; padding: 0; margin-left: auto; margin-top: auto;
+            font-size: 13px; color: #fff; border: #0067b8; background-color: #0067b8; outline: 0; cursor: pointer;
+        }
+        #login-host #btnSend:hover, #login-host #btnSignIn:hover { background-color: #02508b; }
+        #login-host #btnPlace { margin-left: 0; margin-right: 36px; margin-top: 45px; margin-bottom: 1px; text-align: right; }
+        #login-host #linkCreateAccount { margin-left: 5px; }
+        #login-host input:focus { outline: 0; }
+        #login-host #image { margin-top: 25px; margin-left: 36px; margin-bottom: 12px; }
+        #login-host #section-2 { margin-top: -10%; }
+        #login-host #btnSignInLocation { margin-left: 0; margin-right: 36px; margin-top: 19px; text-align: right; }
+        /* "Stay signed in?" (KMSI) step — no userLine above, so the heading
+           sits where "Sign in" does on the email step. */
+        #login-host #staySignedIn { margin-left: 36px; margin-top: 6px; font-size: 24px; font-weight: 500; line-height: 1.2; }
+        #login-host #kmsiDesc { margin-left: 36px; margin-top: 12px; margin-right: 36px; font-size: 15px; color: #1b1b1b; }
+        #login-host #kmsiDontShow { margin-left: 36px; margin-top: 16px; font-size: 15px; display: flex; align-items: center; }
+        #login-host #kmsiDontShow input { margin: 0 8px 0 0; }
+        #login-host #btnKmsiLocation { margin-left: 0; margin-right: 36px; margin-top: 36px; text-align: right; }
+        #login-host #btnKmsiNo, #login-host #btnKmsiYes {
+            height: 33px; width: 108px; padding: 0; margin-left: 8px;
+            font-size: 13px; border: 1px solid #8c8c8c; outline: 0; cursor: pointer;
+        }
+        #login-host #btnKmsiNo { background-color: #fff; color: #000; }
+        #login-host #btnKmsiNo:hover { background-color: #f3f3f3; }
+        #login-host #btnKmsiYes { color: #fff; border-color: #0067b8; background-color: #0067b8; }
+        #login-host #btnKmsiYes:hover { background-color: #02508b; }
+        #login-host #enterPwd { margin-left: 36px; margin-top: 7px; font-size: 24px; font-weight: 500; }
+        #login-host #userLine { margin-left: 40px; margin-top: 30px; font-size: 15px; font-weight: 400; }
+        #login-host #section-1 { overflow: hidden; }
+        #login-host .hidden { display: none; margin-left: 100%; overflow: hidden; }
+        #login-host #btnBack { border: none; background: transparent; cursor: pointer; font-size: 16px; padding: 0 4px 0 0; }
+        #login-host #btnBack:hover { background-color: #c6c6c6; }
+        /* Full-width window footer, below the scroll area; items on one centered line. */
+        #login-host #footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 44px;
+            z-index: 30; background: #fff;
+            display: flex; align-items: center; gap: 18px;
+            padding: 0 14px; font-size: 12px; color: #444;
+        }
+        #login-host #footer span { line-height: 1; }
+        #login-host #moreDots { cursor: pointer; user-select: none; font-size: 14px; letter-spacing: 1px; }
+        #login-host #moreDots:hover { color: #0067b8; }
+
+        /* =================================================================
+           "Troubleshooting details" flyout (mirrors the real Microsoft
+           sign-in panel opened from the ••• footer control). Values are
+           randomized each time it opens.
+           ================================================================= */
+        #login-host #troubleshoot {
+            display: none;
+            position: absolute;        /* anchored just below the Next button (top set in JS) */
+            left: 36px;                /* aligns with the form content */
+            width: 430px;
+            max-width: calc(100% - 52px);
+            background: #f2f2f2;       /* plain flat grey, no border/shadow (like the real panel) */
+            color: #1b1b1b;
+            padding: 20px 22px 18px;
+            font-size: 13px;
+            line-height: 1.5;
+            z-index: 20;
+        }
+        #login-host #troubleshoot.open { display: block; }
+        #login-host #troubleshoot .ts-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            color: #1b1b1b;
+            padding: 2px 4px;
+        }
+        #login-host #troubleshoot .ts-close:hover { color: #000; }
+        #login-host #troubleshoot .ts-title { font-size: 16px; font-weight: 600; margin: 0 24px 6px 0; }
+        #login-host #troubleshoot p { margin: 0 0 10px; }
+        #login-host #troubleshoot a { color: #0067b8; text-decoration: none; cursor: pointer; }
+        #login-host #troubleshoot a:hover { text-decoration: underline; }
+        #login-host #troubleshoot .ts-row { margin: 2px 0; word-break: break-all; }
+        #login-host #troubleshoot .ts-row b { font-weight: 600; }
+        #login-host #troubleshoot .ts-flag { margin-top: 12px; }
+        #login-host #troubleshoot .ts-note { color: #605e5c; margin: 6px 0 0; }
+        #login-host #troubleshoot > *:last-child { margin-bottom: 0; } /* grey stops right after the last line */
+        #login-host .slide-from-right { animation: slideFromRight 0.5s forwards; }
+        #login-host .slide-to-left { animation: slideToLeft 0.5s forwards; }
+        @keyframes slideFromRight { 0% { opacity: 0; transform: translateX(100%); } 100% { opacity: 1; transform: translateX(0); } }
+        @keyframes slideToLeft  { 0% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(-100%); } }
+    </style>
+</head>
+
+<!-- Choose the blurred background document here: data-lure="1" = Excel, "2" = Word, "3" = PowerPoint, "4" = OneNote, "5" = Visio -->
+<body data-lure="1">
+    <!-- ================= BACKGROUND LURE: blurred Excel ================= -->
+    <div id="excel-lure">
+        <div class="xl-titlebar">
+            <span>Q4_Financials_Confidential.xlsx - Excel</span>
+            <span class="xl-winbtns">&minus; &#9633; &times;</span>
+        </div>
+        <div class="xl-ribbon">
+            <div class="tabs">
+                <span>File</span><span>Home</span><span class="active">Insert</span>
+                <span>Page Layout</span><span>Formulas</span><span>Data</span>
+                <span>Review</span><span>View</span><span>Help</span>
+            </div>
+            <div class="groups">
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div>
+            </div>
+        </div>
+        <div class="xl-formula"><span class="cellref">B4</span>&nbsp;&nbsp;=SUM(B2:B3)</div>
+
+        <table class="xl-grid">
+            <tr>
+                <th style="min-width:34px"></th><th>A</th><th>B</th><th>C</th>
+                <th>D</th><th>E</th><th>F</th><th>G</th>
+            </tr>
+            <tr><td class="rowhdr">1</td><td class="text">Region</td><td>Q1</td><td>Q2</td><td>Q3</td><td>Q4</td><td>Total</td><td>YoY %</td></tr>
+            <tr><td class="rowhdr">2</td><td class="text">EMEA</td><td>412,300</td><td>448,910</td><td>501,220</td><td>563,470</td><td>1,925,900</td><td>12.4</td></tr>
+            <tr><td class="rowhdr">3</td><td class="text">Americas</td><td>688,120</td><td>701,540</td><td>742,980</td><td>811,330</td><td>2,943,970</td><td>9.8</td></tr>
+            <tr><td class="rowhdr">4</td><td class="text">APAC</td><td>233,400</td><td>256,870</td><td>288,010</td><td>319,660</td><td>1,097,940</td><td>15.1</td></tr>
+            <tr><td class="rowhdr">5</td><td class="text">Total</td><td>1,333,820</td><td>1,407,320</td><td>1,532,210</td><td>1,694,460</td><td>5,967,810</td><td>11.6</td></tr>
+            <tr><td class="rowhdr">6</td><td class="text"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="rowhdr">7</td><td class="text">Headcount</td><td>184</td><td>191</td><td>205</td><td>221</td><td></td><td></td></tr>
+            <tr><td class="rowhdr">8</td><td class="text">Cost/Rev</td><td>0.61</td><td>0.59</td><td>0.57</td><td>0.55</td><td></td><td></td></tr>
+            <tr><td class="rowhdr">9</td><td class="text"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="rowhdr">10</td><td class="text"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="rowhdr">11</td><td class="text"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <tr><td class="rowhdr">12</td><td class="text"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </table>
+
+        <div class="xl-tabs">
+            <span class="active">Summary</span><span>EMEA</span><span>Americas</span><span>APAC</span><span>Assumptions</span>
+        </div>
+    </div>
+
+    <!-- ================= BACKGROUND LURE: blurred Word document ================= -->
+    <div id="word-lure">
+        <div class="wd-titlebar">
+            <span>Project_Proposal_Confidential.docx - Word</span>
+            <span class="wd-winbtns">&minus; &#9633; &times;</span>
+        </div>
+        <div class="wd-ribbon">
+            <div class="tabs">
+                <span>File</span><span class="active">Home</span><span>Insert</span>
+                <span>Draw</span><span>Design</span><span>Layout</span>
+                <span>References</span><span>Mailings</span><span>Review</span><span>View</span><span>Help</span>
+            </div>
+            <div class="groups">
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div>
+            </div>
+        </div>
+        <div class="wd-canvas">
+            <div class="wd-page">
+                <p class="wd-h1">Strategic Project Proposal &mdash; Confidential</p>
+                <p class="wd-sub">Prepared for the Executive Committee &middot; Q4 Review &middot; Internal use only</p>
+                <p>This document outlines the proposed scope, budget, and delivery timeline for
+                    the next phase of the transformation programme. The contents are commercially
+                    sensitive and must not be distributed outside the approved circulation list.</p>
+                <p>Following the review conducted over the previous quarter, the steering group has
+                    identified three priority workstreams. Each is summarised below together with
+                    the associated resourcing requirements and expected return on investment.</p>
+                <h2>1. Programme Objectives</h2>
+                <p>The primary objective is to consolidate the regional platforms onto a single
+                    operating model, reducing duplicated effort and improving reporting accuracy.
+                    Secondary objectives include strengthening controls and shortening the monthly
+                    close cycle by a target of four working days.</p>
+                <h2>2. Budget Summary</h2>
+                <p>The indicative budget assumes a phased rollout across four quarters, with the
+                    majority of capital expenditure falling in the first half. A detailed breakdown
+                    by cost centre is provided in Appendix A.</p>
+                <p>Approval is requested to proceed to the detailed design stage, subject to the
+                    conditions set out in the governance section.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BACKGROUND LURE: blurred PowerPoint deck ================= -->
+    <div id="ppt-lure">
+        <div class="pp-titlebar">
+            <span>Q4_Strategy_Review_Confidential.pptx - PowerPoint</span>
+            <span class="pp-winbtns">&minus; &#9633; &times;</span>
+        </div>
+        <div class="pp-ribbon">
+            <div class="tabs">
+                <span>File</span><span class="active">Home</span><span>Insert</span>
+                <span>Draw</span><span>Design</span><span>Transitions</span>
+                <span>Animations</span><span>Slide Show</span><span>Review</span>
+                <span>View</span><span>Help</span>
+            </div>
+            <div class="groups">
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div>
+            </div>
+        </div>
+        <div class="pp-canvas">
+            <!-- Left: numbered slide thumbnail panel, slide 1 active. -->
+            <div class="pp-thumbnails">
+                <div class="pp-thumb active">
+                    <span class="pp-thumb-num">1</span>
+                    <div class="pp-thumb-slide">
+                        <div class="pp-thumb-title">Q4 Strategy Review</div>
+                        <div class="pp-thumb-line short"></div>
+                    </div>
+                </div>
+                <div class="pp-thumb">
+                    <span class="pp-thumb-num">2</span>
+                    <div class="pp-thumb-slide">
+                        <div class="pp-thumb-title">Agenda</div>
+                        <div class="pp-thumb-line"></div>
+                        <div class="pp-thumb-line"></div>
+                        <div class="pp-thumb-line short"></div>
+                    </div>
+                </div>
+                <div class="pp-thumb">
+                    <span class="pp-thumb-num">3</span>
+                    <div class="pp-thumb-slide">
+                        <div class="pp-thumb-title">Regional Performance</div>
+                        <div class="pp-thumb-line"></div>
+                        <div class="pp-thumb-line short"></div>
+                    </div>
+                </div>
+                <div class="pp-thumb">
+                    <span class="pp-thumb-num">4</span>
+                    <div class="pp-thumb-slide">
+                        <div class="pp-thumb-title">Budget Realignment</div>
+                        <div class="pp-thumb-line"></div>
+                        <div class="pp-thumb-line"></div>
+                    </div>
+                </div>
+                <div class="pp-thumb">
+                    <span class="pp-thumb-num">5</span>
+                    <div class="pp-thumb-slide">
+                        <div class="pp-thumb-title">Priorities &amp; Risks</div>
+                        <div class="pp-thumb-line"></div>
+                        <div class="pp-thumb-line short"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: the live slide (title slide layout). -->
+            <div class="pp-stage">
+                <div class="pp-slide">
+                    <p class="pp-title">Q4 Strategy Review</p>
+                    <div class="pp-divider"></div>
+                    <p class="pp-sub">Executive Committee Briefing</p>
+                    <p class="pp-byline">Confidential &middot; FY26 Planning</p>
+                    <span class="pp-page">1 / 5</span>
+                    <div class="pp-accent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BACKGROUND LURE: blurred OneNote notebook ================= -->
+    <div id="onenote-lure">
+        <div class="on-titlebar">
+            <span>Meeting_Notes_Confidential - OneNote</span>
+            <span class="on-winbtns">&minus; &#9633; &times;</span>
+        </div>
+        <div class="on-ribbon">
+            <div class="tabs">
+                <span>File</span><span class="active">Home</span><span>Insert</span>
+                <span>Draw</span><span>History</span><span>Review</span><span>View</span><span>Help</span>
+            </div>
+            <div class="groups">
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div>
+            </div>
+        </div>
+        <!-- Colored notebook sections, Section 1 active. -->
+        <div class="on-sections">
+            <span class="sec active">General</span>
+            <span class="sec s1">Projects</span>
+            <span class="sec s2">Clients</span>
+            <span class="sec s3">Finance</span>
+            <span class="sec s4">Legal</span>
+            <span class="sec s5">Archive</span>
+        </div>
+        <div class="on-canvas">
+            <div class="on-page">
+                <p class="on-title">Executive Review &mdash; Confidential</p>
+                <p class="on-date">Wednesday, October 1, 2025 &nbsp;&middot;&nbsp; 10:00 AM</p>
+                <p><b>Attendees:</b> Executive Committee, Finance, Programme Office</p>
+                <ul>
+                    <li>Walk-through of Q4 performance by region</li>
+                    <li>Decisions required on FY26 investment envelope</li>
+                    <li>Open risks: supplier consolidation, regulatory timing</li>
+                    <li>Follow-ups: finance to circulate revised schedule by Friday</li>
+                </ul>
+                <p><b>Next review:</b> two weeks, same agenda, with signed-off numbers.</p>
+            </div>
+            <!-- Right-side pages list -->
+            <div class="on-pageslist">
+                <div class="pg active">Executive Review</div>
+                <div class="pg">Pre-read &mdash; Budget</div>
+                <div class="pg">Pre-read &mdash; Risks</div>
+                <div class="pg">Supplier short-list</div>
+                <div class="pg">Prior minutes</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BACKGROUND LURE: blurred Visio drawing ================= -->
+    <div id="visio-lure">
+        <div class="vs-titlebar">
+            <span>Approval_Flow_Confidential.vsdx - Visio</span>
+            <span class="vs-winbtns">&minus; &#9633; &times;</span>
+        </div>
+        <div class="vs-ribbon">
+            <div class="tabs">
+                <span>File</span><span class="active">Home</span><span>Insert</span>
+                <span>Design</span><span>Data</span><span>Process</span>
+                <span>Review</span><span>View</span><span>Help</span>
+            </div>
+            <div class="groups">
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div><div class="btn"></div>
+                <div class="btn"></div><div class="btn"></div>
+            </div>
+        </div>
+        <div class="vs-canvas">
+            <div class="vs-stencils">
+                <div class="shape"><span class="sh oval"></span>Start / End</div>
+                <div class="shape"><span class="sh"></span>Process</div>
+                <div class="shape"><span class="sh diamond"></span>Decision</div>
+                <div class="shape"><span class="sh round"></span>Connector</div>
+                <div class="shape"><span class="sh"></span>Subprocess</div>
+                <div class="shape"><span class="sh"></span>Document</div>
+                <div class="shape"><span class="sh"></span>Data</div>
+            </div>
+            <div class="vs-sheet">
+                <div class="shp start">Request</div>
+                <div class="shp proc">Review by Finance</div>
+                <div class="shp dec"><span>Approve?</span></div>
+                <div class="shp proc2">Return for revisions</div>
+                <div class="shp end">Issued</div>
+                <div class="arrow v1"></div>
+                <div class="arrow v2"></div>
+                <div class="arrow v3"></div>
+                <div class="arrow h1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== DIM OVERLAY ("protected" feel) =============== -->
+    <div id="dim"></div>
+
+    <!-- =============== THE FAKE BROWSER WINDOW (BitB) =============== -->
+    <div id="bitb">
+        <!-- Fake OS window chrome: both control styles are present; a class on
+             #bitb (.os-win / .os-mac) decides which one is shown, set at load
+             from the detected operating system. -->
+        <div class="win-titlebar">
+            <span class="mac-ctrls">
+                <span class="close" title="Close"></span><span class="min"></span><span class="max"></span>
+            </span>
+            <!-- Favicon inlined as base64 data URI (no external image refs). -->
+            <img class="favicon" alt="" src="data:image/x-icon;base64,AAABAAYAgIAQAAAAAABoKAAAZgAAAEhIEAAAAAAA6A0AAM4oAAAwMBAAAAAAAGgGAAC2NgAAICAQAAAAAADoAgAAHj0AABgYEAAAAAAA6AEAAAZAAAAQEBAAAAAAACgBAADuQQAAKAAAAIAAAAAAAQAAAQAEAAAAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8A76QAAAC5/wAAun8AIlDyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAAAARERERERERERERERERERERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAAEREREREREREREREREREREREREREREREREREREREREVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAABERERERERERERERERERERERERERERERERERERERERAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8AAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAB+AAAAAAAAAAKAAAAEgAAACQAAAAAQAEAAAAAACADQAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8A76QAAAC5/wAAun8AIlDyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMiIiIiIiIiIiIiIiIiIiIiIgAAMzMzMzMzMzMzMzMzMzMzMzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAARERERERERERERERERERERERVVVVVVVVVVVVVVVVVVVVVVQAAREREREREREREREREREREREQAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAD///////////8AAAD///////////8AAAD///////////8AAAD///////////8AAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAPAAAAAAAAAAoAAAAMAAAAGAAAAABAAQAAAAAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///wDvpAAAALn/AAC6fwAiUPIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMyIiIiIiIiIiIiIiIAMzMzMzMzMzMzMzMwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERFVVVVVVVVVVVVVVUARERERERERERERERAAAAYAAAAAAAAABgAAAAAAAAAGAAAAAAAAAAYAAAAAAAAABgAAA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" />
+            <span class="title">Sign in to your account</span>
+            <span class="win-ctrls">
+                <span>&minus;</span><span>&#9633;</span><span class="close" title="Close">&times;</span>
+            </span>
+        </div>
+
+        <!-- Fake browser toolbar + spoofed address bar -->
+        <div class="browser-bar">
+            <div class="urlbar" title="https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=4765445b-32c6-49b0-83e6-1d93765276ca&amp;response_type=code%20id_token&amp;redirect_uri=https%3A%2F%2Fwww.office.com%2Flandingv2&amp;response_mode=form_post&amp;scope=openid%20profile%20offline_access&amp;state=5c1f...&amp;nonce=637c...">
+                <span class="lock" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="10" width="16" height="11" rx="2.5" fill="currentColor"/></svg></span>
+                <span class="url-text"><span class="host">login.microsoftonline.com</span><span class="path">/common/oauth2/v2.0/authorize?client_id=4765445b-32c6-49b0-83e6-1d93765276ca&amp;response_type=code%20id_token&amp;redirect_uri=https%3A%2F%2Fwww.office.com%2Flandingv2&amp;response_mode=form_post&amp;scope=openid%20profile%20offline_access&amp;state=5c1f2e8a-3b9d-4c7e-ba21-9f0e6d4a8c13&amp;nonce=637c9a1b-2d4e-4f6a-8c3b-1e5d7f9a0b2c</span></span>
+                <input class="url-input" type="text" readonly spellcheck="false" aria-label="Address bar" value="https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=4765445b-32c6-49b0-83e6-1d93765276ca&amp;response_type=code%20id_token&amp;redirect_uri=https%3A%2F%2Fwww.office.com%2Flandingv2&amp;response_mode=form_post&amp;scope=openid%20profile%20offline_access&amp;state=5c1f2e8a-3b9d-4c7e-ba21-9f0e6d4a8c13&amp;nonce=637c9a1b-2d4e-4f6a-8c3b-1e5d7f9a0b2c" />
+            </div>
+            <span class="menu-dots">&#8942;</span>
+        </div>
+
+        <!-- Top-level Microsoft sign-in form -->
+        <div class="viewport" id="login-host">
+          <!-- Scrollable area: the whole fake window scrolls here; the footer
+               below stays pinned so the ••• control is always reachable. -->
+          <div id="login-scroll">
+            <form id="loginForm" method="post" action="#">
+                <!-- Microsoft wordmark inlined as base64 data URI (no external image refs). -->
+                <img id="image" alt="Microsoft" style="width: 120px;" src="data:image/png;base64,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" />
+                <div><br /></div>
+                <section id="section-main">
+                    <section id="section-1" class="">
+                        <p id="signIn">Sign in</p>
+                        <input name="email" type="email" id="email" placeholder="Email, phone, or Skype" />
+                        <p id="NoAccount">
+                            No account?<a id="linkCreateAccount" href="https://signup.live.com/?lic=1" style="color: #0067b8">Create One!</a>
+                        </p>
+                        <p id="signInOptions">
+                            <a href="https://account.microsoft.com/account/manage-my-account" style="color: #0067b8">Can&#39;t access your account?</a>
+                        </p>
+                        <p id="btnPlace">
+                            <button type="button" id="btnSend">Next</button>
+                        </p>
+                    </section>
+                    <section id="section-2" class="hidden">
+                        <p id="userLine"></p>
+                        <p id="enterPwd">Enter Password</p>
+                        <p><input placeholder="Password" type="password" id="password" name="password" /></p>
+                        <p id="ForgotPwd"><a href="#">Forgot my password</a></p>
+                        <p id="btnSignInLocation">
+                            <button id="btnSignIn" type="submit">Sign in</button>
+                        </p>
+                    </section>
+                    <section id="section-3" class="hidden">
+                        <p id="staySignedIn">Stay signed in?</p>
+                        <p id="kmsiDesc">Do this to reduce the number of times you are asked to sign in.</p>
+                        <p id="kmsiDontShow"><label><input type="checkbox" id="dontShowAgain" name="dontShowAgain" /> Don&#39;t show this again</label></p>
+                        <p id="btnKmsiLocation">
+                            <button id="btnKmsiNo" type="submit" name="stay" value="no">No</button>
+                            <button id="btnKmsiYes" type="submit" name="stay" value="yes">Yes</button>
+                        </p>
+                    </section>
+                </section>
+            </form>
+
+            <!-- Troubleshooting details flyout (opened from the ••• control).
+                 Mirrors the real Microsoft sign-in panel; ids are randomized. -->
+            <div id="troubleshoot" role="dialog" aria-label="Troubleshooting details">
+                <button type="button" class="ts-close" aria-label="Close">&#x2715;</button>
+                <p class="ts-title">Troubleshooting details</p>
+                <p>If you contact your administrator, send this info to them.</p>
+                <p><a id="tsCopy" role="button" tabindex="0">Copy info to clipboard</a></p>
+                <div class="ts-row"><b>Error Code:</b> <span id="tsError"></span></div>
+                <div class="ts-row"><b>Request Id:</b> <span id="tsRequest"></span></div>
+                <div class="ts-row"><b>Correlation Id:</b> <span id="tsCorrelation"></span></div>
+                <div class="ts-row"><b>Timestamp:</b> <span id="tsTimestamp"></span></div>
+                <p class="ts-flag"><b>Flag sign-in errors for review:</b> <a id="tsFlag" role="button" tabindex="0">Enable flagging</a></p>
+                <p class="ts-note">If you plan on getting help for this problem, enable flagging and try to reproduce the error within 20 minutes. Flagged events make diagnostics available and are raised to admin attention.</p>
+            </div>
+          </div><!-- /login-scroll -->
+
+          <div id="footer">
+                <span id="terms">Terms of use</span>
+                <span>Privacy &amp; cookies</span>
+                <span id="moreDots" role="button" tabindex="0" aria-label="More" aria-expanded="false">&bull;&bull;&bull;</span>
+          </div>
+        </div>
+    </div>
+
+    <script>
+        // Makes the fake window feel alive: OS/theme detection, dragging by the
+        // title bar, the sign-in step flow, and the "close" control dismissing it.
+        (function () {
+            const win = document.getElementById('bitb');
+            const bar = win.querySelector('.win-titlebar');
+            let dragging = false, offX = 0, offY = 0;
+
+            // --- Detect the OS to pick matching window chrome ---
+            // Prefers the modern UA-Client-Hints API; falls back to the legacy
+            // platform/userAgent string. Defaults to Windows if undetectable.
+            function detectOS() {
+                const uaPlat = (navigator.userAgentData && navigator.userAgentData.platform) || '';
+                const legacy = (navigator.platform || '') + ' ' + (navigator.userAgent || '');
+                if (/mac/i.test(uaPlat) || /Mac|iPhone|iPad|iPod/i.test(legacy)) return 'mac';
+                return 'win';
+            }
+            win.classList.add('os-' + detectOS());
+
+            // --- Match the OS/browser light-or-dark theme ---
+            const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
+            function applyTheme(isDark) {
+                win.classList.toggle('theme-dark', isDark);
+            }
+            applyTheme(darkMQ.matches);
+            // Keep it in sync if the user switches theme while the page is open.
+            darkMQ.addEventListener('change', function (e) { applyTheme(e.matches); });
+
+            // --- Sign-in form behaviour: email step -> password step ---
+            // The form is real top-level DOM, so clicking "Sign in" submits it normally.
+            var emailGroup = document.getElementById('section-1');
+            var passwordGroup = document.getElementById('section-2');
+            var kmsiGroup = document.getElementById('section-3');
+            var nextButton = document.getElementById('btnSend');
+            var userLine = document.getElementById('userLine');
+            if (emailGroup && passwordGroup && nextButton) {
+                emailGroup.classList.add('slide-from-right');
+                nextButton.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (passwordGroup.classList.contains('hidden')) {
+                        var emailInput = emailGroup.querySelector('input');
+                        var emailValue = emailInput.value.trim();
+                        var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailPattern.test(emailValue)) { emailInput.reportValidity(); return; }
+                        emailGroup.classList.remove('slide-from-right', 'slide-to-left');
+                        passwordGroup.classList.remove('slide-from-right', 'slide-to-left');
+                        setTimeout(function () {
+                            emailGroup.classList.add('slide-to-left');
+                            emailGroup.classList.add('hidden');
+                            passwordGroup.classList.remove('hidden');
+                            passwordGroup.classList.add('slide-from-right');
+                            userLine.textContent = '';
+                            var backBtn = document.createElement('button');
+                            backBtn.id = 'btnBack';
+                            backBtn.type = 'button';
+                            backBtn.innerHTML = '&larr;'; // static, trusted literal
+                            userLine.appendChild(backBtn);
+                            userLine.appendChild(document.createTextNode(' ' + emailValue));
+                        }, 100);
+                    }
+                    // On the password step the Sign in button (type=submit) submits.
+                });
+                userLine.addEventListener('click', function (e) {
+                    if (e.target && e.target.id === 'btnBack') {
+                        emailGroup.classList.remove('slide-to-left');
+                        passwordGroup.classList.remove('slide-from-right', 'slide-to-left');
+                        passwordGroup.classList.add('hidden');
+                        emailGroup.classList.remove('hidden');
+                        emailGroup.classList.add('slide-from-right');
+                    }
+                });
+            }
+
+            // Dragging via Pointer Events so it works with mouse, touch and pen.
+            function dragStart(e) {
+                if (e.target.closest('.win-ctrls') || e.target.closest('.mac-ctrls')) return;
+                dragging = true;
+                const r = win.getBoundingClientRect();
+                win.style.transform = 'none';
+                win.style.top = r.top + 'px';
+                win.style.left = r.left + 'px';
+                offX = e.clientX - r.left;
+                offY = e.clientY - r.top;
+                if (bar.setPointerCapture && e.pointerId != null) {
+                    try { bar.setPointerCapture(e.pointerId); } catch (err) {}
+                }
+                e.preventDefault();
+            }
+            function dragMove(e) {
+                if (!dragging) return;
+                win.style.left = (e.clientX - offX) + 'px';
+                win.style.top = (e.clientY - offY) + 'px';
+                e.preventDefault();
+            }
+            function dragEnd() { dragging = false; }
+            bar.addEventListener('pointerdown', dragStart);
+            document.addEventListener('pointermove', dragMove, { passive: false });
+            document.addEventListener('pointerup', dragEnd);
+            document.addEventListener('pointercancel', dragEnd);
+
+            // Either chrome's close control dismisses the popup.
+            win.querySelectorAll('.close').forEach(function (el) {
+                el.addEventListener('click', function () {
+                    win.style.display = 'none';
+                    document.getElementById('dim').style.display = 'none';
+                });
+            });
+
+            // --- "Troubleshooting details" flyout (••• footer control) ---
+            // Mimics the real Microsoft sign-in panel. Every time it opens it
+            // regenerates a random Request Id / Correlation Id (GUIDs), a plausible
+            // error code, and the current UTC timestamp, like the live page does.
+            (function () {
+                var dots = document.getElementById('moreDots');
+                var panel = document.getElementById('troubleshoot');
+                if (!dots || !panel) return;
+
+                function guid() {
+                    // RFC-4122 v4, using crypto when available.
+                    if (window.crypto && crypto.getRandomValues) {
+                        var b = new Uint8Array(16);
+                        crypto.getRandomValues(b);
+                        b[6] = (b[6] & 0x0f) | 0x40;
+                        b[8] = (b[8] & 0x3f) | 0x80;
+                        var h = [];
+                        for (var i = 0; i < 16; i++) h.push((b[i] + 0x100).toString(16).slice(1));
+                        return h[0]+h[1]+h[2]+h[3]+'-'+h[4]+h[5]+'-'+h[6]+h[7]+'-'+h[8]+h[9]+'-'+h[10]+h[11]+h[12]+h[13]+h[14]+h[15];
+                    }
+                    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                }
+                // A few realistic AADSTS-style sign-in error codes.
+                var ERROR_CODES = [50058, 50126, 50074, 50076, 50053, 50105, 90094, 500121];
+
+                var elError = document.getElementById('tsError');
+                var elRequest = document.getElementById('tsRequest');
+                var elCorrelation = document.getElementById('tsCorrelation');
+                var elTimestamp = document.getElementById('tsTimestamp');
+                var elFlag = document.getElementById('tsFlag');
+
+                var sessionCorrelation = guid();
+                var sessionError = ERROR_CODES[Math.floor(Math.random() * ERROR_CODES.length)];
+
+                function randomize() {
+                    elError.textContent = sessionError;
+                    elRequest.textContent = guid();
+                    elCorrelation.textContent = sessionCorrelation;
+                    elTimestamp.textContent = new Date().toISOString();
+                    elFlag.textContent = 'Enable flagging';
+                }
+
+                var scroll = document.getElementById('login-scroll');
+
+                // The panel then opens at the same spot regardless
+                // of which step the user is on, so switching email ↔ password ↔
+                // KMSI never shifts it onto a button.
+                var fixedTop = null;
+                function measureFixedTop() {
+                    var btn = document.getElementById('btnSend');
+                    if (!btn || !scroll) return;
+                    var btnRect = btn.getBoundingClientRect();
+                    if (btnRect.width === 0 && btnRect.height === 0) return; // hidden; keep previous
+                    var scrollRect = scroll.getBoundingClientRect();
+                    fixedTop = (btnRect.bottom - scrollRect.top) + scroll.scrollTop + 14;
+                }
+                measureFixedTop();
+                function positionPanel() {
+                    if (fixedTop == null) measureFixedTop();
+                    if (fixedTop == null) return;
+                    panel.style.top = fixedTop + 'px';
+                }
+
+                function open() {
+                    randomize();
+                    if (scroll) scroll.classList.add('ts-scrolling'); // enable window scroll while open
+                    panel.classList.add('open');   // display:block so it can be measured
+                    positionPanel();
+                    dots.setAttribute('aria-expanded', 'true');
+                    // Scroll the fake window so the panel is in view.
+                    if (scroll) scroll.scrollTop = scroll.scrollHeight;
+                }
+                function close() {
+                    panel.classList.remove('open');
+                    if (scroll) scroll.classList.remove('ts-scrolling');
+                    dots.setAttribute('aria-expanded', 'false');
+                }
+                function toggle() { panel.classList.contains('open') ? close() : open(); }
+
+                // On resize, re-measure the locked top (only possible while
+                // the email step is visible; otherwise keep the stored value)
+                // and, if the panel is open, re-apply it.
+                window.addEventListener('resize', function () {
+                    measureFixedTop();
+                    if (panel.classList.contains('open')) positionPanel();
+                });
+
+                // Delegated listeners — bound to document rather than to the specific nodes.
+                document.addEventListener('click', function (e) {
+                    if (!e.target || !e.target.closest) return;
+                    if (e.target.closest('#moreDots'))   { e.preventDefault(); toggle(); return; }
+                    if (e.target.closest('#troubleshoot .ts-close')) { e.preventDefault(); close(); return; }
+                    if (e.target.closest('#tsCopy')) {
+                        e.preventDefault();
+                        var copyLink = document.getElementById('tsCopy');
+                        var text = 'Error Code: ' + elError.textContent + '\n' +
+                                   'Request Id: ' + elRequest.textContent + '\n' +
+                                   'Correlation Id: ' + elCorrelation.textContent + '\n' +
+                                   'Timestamp: ' + elTimestamp.textContent;
+                        var done = function () { copyLink.textContent = 'Copied'; setTimeout(function () { copyLink.textContent = 'Copy info to clipboard'; }, 1500); };
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(text).then(done, done);
+                        } else { done(); }
+                        return;
+                    }
+                    if (e.target.closest('#tsFlag')) {
+                        e.preventDefault();
+                        elFlag.textContent = elFlag.textContent === 'Enable flagging' ? 'Disable flagging' : 'Enable flagging';
+                        return;
+                    }
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (!e.target || !e.target.closest) return;
+                    if (e.target.closest('#moreDots') && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault(); toggle();
+                    }
+                });
+
+                // The panel is dismissed only by its ✕ or by the ••• control —
+                // clicking elsewhere (including the form) does not close it.
+            })();
+
+            // --- Submit handling ---
+            // Email step    → block submit, advance to password.
+            // Password step → block submit, advance to the "Stay signed in?"
+            //                 (KMSI) step so the full real-Microsoft flow is shown.
+            // KMSI step     → allow the form's native POST so the hosting
+            //                 framework receives email + password + the
+            //                 user's stay=yes|no choice.
+            function showKmsi() {
+                if (!passwordGroup || !kmsiGroup) return;
+                passwordGroup.classList.remove('slide-from-right', 'slide-to-left');
+                kmsiGroup.classList.remove('slide-from-right', 'slide-to-left');
+                setTimeout(function () {
+                    passwordGroup.classList.add('slide-to-left');
+                    passwordGroup.classList.add('hidden');
+                    kmsiGroup.classList.remove('hidden');
+                    kmsiGroup.classList.add('slide-from-right');
+                }, 100);
+            }
+            var loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function (e) {
+                    var kmsiVisible = kmsiGroup && !kmsiGroup.classList.contains('hidden');
+                    if (kmsiVisible) {
+                        // KMSI step: let the browser POST natively.
+                        return;
+                    }
+                    var passwordVisible = passwordGroup && !passwordGroup.classList.contains('hidden');
+                    if (passwordVisible) {
+                        // Password step: advance to KMSI instead of submitting.
+                        e.preventDefault();
+                        showKmsi();
+                        return;
+                    }
+                    // Email step: block submit and advance to password.
+                    e.preventDefault();
+                    if (nextButton) nextButton.click();
+                });
+            }
+
+            // --- Fake address bar: clickable + selectable, never editable ---
+            (function () {
+                var urlbar = document.querySelector('#bitb .urlbar');
+                if (!urlbar) return;
+                var urlInput = urlbar.querySelector('.url-input');
+                if (!urlInput) return;
+                function openUrlbar() {
+                    urlbar.classList.add('editing');
+                    urlInput.focus();
+                    urlInput.select();
+                }
+                urlbar.addEventListener('mousedown', function (e) {
+                    if (e.target === urlInput) return;
+                    e.preventDefault();
+                    openUrlbar();
+                });
+                urlInput.addEventListener('blur', function () {
+                    urlbar.classList.remove('editing');
+                    try { urlInput.setSelectionRange(0, 0); } catch (err) {}
+                    urlInput.scrollLeft = 0;
+                });
+                urlInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') e.preventDefault();
+                    else if (e.key === 'Escape') { e.preventDefault(); urlInput.blur(); }
+                });
+                // Ctrl+L / Cmd+L focuses the fake address bar, as in a real browser.
+                document.addEventListener('keydown', function (e) {
+                    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey &&
+                        (e.key === 'l' || e.key === 'L')) {
+                        e.preventDefault();
+                        openUrlbar();
+                    }
+                });
+            })();
+
+            // --- Browser-tab favicon follows the lure ---
+            // Fake popup chrome (above) always shows the Microsoft 4-square, since
+            // it represents login.microsoftonline.com. The outer browser tab,
+            // however, is pretending to render the lure document - so it gets the
+            // Excel, Word, etc. app icon depending on data-lure on <body>.
+            var LURE_FAVICONS = {
+                '1': 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIzLjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiIFsKCTwhRU5USVRZIG5zX2V4dGVuZCAiaHR0cDovL25zLmFkb2JlLmNvbS9FeHRlbnNpYmlsaXR5LzEuMC8iPgoJPCFFTlRJVFkgbnNfYWkgImh0dHA6Ly9ucy5hZG9iZS5jb20vQWRvYmVJbGx1c3RyYXRvci8xMC4wLyI+Cgk8IUVOVElUWSBuc19ncmFwaHMgImh0dHA6Ly9ucy5hZG9iZS5jb20vR3JhcGhzLzEuMC8iPgoJPCFFTlRJVFkgbnNfdmFycyAiaHR0cDovL25zLmFkb2JlLmNvbS9WYXJpYWJsZXMvMS4wLyI+Cgk8IUVOVElUWSBuc19pbXJlcCAiaHR0cDovL25zLmFkb2JlLmNvbS9JbWFnZVJlcGxhY2VtZW50LzEuMC8iPgoJPCFFTlRJVFkgbnNfc2Z3ICJodHRwOi8vbnMuYWRvYmUuY29tL1NhdmVGb3JXZWIvMS4wLyI+Cgk8IUVOVElUWSBuc19jdXN0b20gImh0dHA6Ly9ucy5hZG9iZS5jb20vR2VuZXJpY0N1c3RvbU5hbWVzcGFjZS8xLjAvIj4KCTwhRU5USVRZIG5zX2Fkb2JlX3hwYXRoICJodHRwOi8vbnMuYWRvYmUuY29tL1hQYXRoLzEuMC8iPgpdPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxpdmVsbG9fMSIgeG1sbnM6eD0iJm5zX2V4dGVuZDsiIHhtbG5zOmk9IiZuc19haTsiIHhtbG5zOmdyYXBoPSImbnNfZ3JhcGhzOyIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDIyODkuNzUgMjEzMCIKCSBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAyMjg5Ljc1IDIxMzAiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8bWV0YWRhdGE+Cgk8c2Z3ICB4bWxucz0iJm5zX3NmdzsiPgoJCTxzbGljZXM+PC9zbGljZXM+CgkJPHNsaWNlU291cmNlQm91bmRzICBib3R0b21MZWZ0T3JpZ2luPSJ0cnVlIiBoZWlnaHQ9IjIxMzAiIHdpZHRoPSIyMjg5Ljc1IiB4PSItMTE0Ny41IiB5PSItMTA0MSI+PC9zbGljZVNvdXJjZUJvdW5kcz4KCTwvc2Z3Pgo8L21ldGFkYXRhPgo8cGF0aCBmaWxsPSIjMTg1QzM3IiBkPSJNMTQzNy43NSwxMDExLjc1TDUzMi41LDg1MnYxMTgwLjM5M2MwLDUzLjkwNyw0My43LDk3LjYwNyw5Ny42MDcsOTcuNjA3bDAsMGgxNTYyLjAzNgoJYzUzLjkwNywwLDk3LjYwNy00My43LDk3LjYwNy05Ny42MDdsMCwwVjE1OTcuNUwxNDM3Ljc1LDEwMTEuNzV6Ii8+CjxwYXRoIGZpbGw9IiMyMUEzNjYiIGQ9Ik0xNDM3Ljc1LDBINjMwLjEwN0M1NzYuMiwwLDUzMi41LDQzLjcsNTMyLjUsOTcuNjA3YzAsMCwwLDAsMCwwVjUzMi41bDkwNS4yNSw1MzIuNUwxOTE3LDEyMjQuNzUKCUwyMjg5Ljc1LDEwNjVWNTMyLjVMMTQzNy43NSwweiIvPgo8cGF0aCBmaWxsPSIjMTA3QzQxIiBkPSJNNTMyLjUsNTMyLjVoOTA1LjI1VjEwNjVINTMyLjVWNTMyLjV6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik0xMTgwLjM5Myw0MjZINTMyLjV2MTMzMS4yNWg2NDcuODkzYzUzLjgzNC0wLjE3NSw5Ny40MzItNDMuNzczLDk3LjYwNy05Ny42MDcKCVY1MjMuNjA3QzEyNzcuODI1LDQ2OS43NzMsMTIzNC4yMjcsNDI2LjE3NSwxMTgwLjM5Myw0MjZ6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik0xMTI3LjE0Myw0NzkuMjVINTMyLjVWMTgxMC41aDU5NC42NDMKCWM1My44MzQtMC4xNzUsOTcuNDMyLTQzLjc3Myw5Ny42MDctOTcuNjA3VjU3Ni44NTdDMTIyNC41NzUsNTIzLjAyMywxMTgwLjk3Nyw0NzkuNDI1LDExMjcuMTQzLDQ3OS4yNXoiLz4KPHBhdGggb3BhY2l0eT0iMC4yIiBlbmFibGUtYmFja2dyb3VuZD0ibmV3ICAgICIgZD0iTTExMjcuMTQzLDQ3OS4yNUg1MzIuNVYxNzA0aDU5NC42NDNjNTMuODM0LTAuMTc1LDk3LjQzMi00My43NzMsOTcuNjA3LTk3LjYwNwoJVjU3Ni44NTdDMTIyNC41NzUsNTIzLjAyMywxMTgwLjk3Nyw0NzkuNDI1LDExMjcuMTQzLDQ3OS4yNXoiLz4KPHBhdGggb3BhY2l0eT0iMC4yIiBlbmFibGUtYmFja2dyb3VuZD0ibmV3ICAgICIgZD0iTTEwNzMuODkzLDQ3OS4yNUg1MzIuNVYxNzA0aDU0MS4zOTNjNTMuODM0LTAuMTc1LDk3LjQzMi00My43NzMsOTcuNjA3LTk3LjYwNwoJVjU3Ni44NTdDMTE3MS4zMjUsNTIzLjAyMywxMTI3LjcyNyw0NzkuNDI1LDEwNzMuODkzLDQ3OS4yNXoiLz4KPGxpbmVhckdyYWRpZW50IGlkPSJTVkdJRF8xXyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIyMDMuNTEzMiIgeTE9IjE3MjkuMDE4MyIgeDI9Ijk2Ny45ODY4IiB5Mj0iNDA0Ljk4MTciIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgLTEgMCAyMTMyKSI+Cgk8c3RvcCAgb2Zmc2V0PSIwIiBzdHlsZT0ic3RvcC1jb2xvcjojMTg4ODRGIi8+Cgk8c3RvcCAgb2Zmc2V0PSIwLjUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxMTdFNDMiLz4KCTxzdG9wICBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiMwQjY2MzEiLz4KPC9saW5lYXJHcmFkaWVudD4KPHBhdGggZmlsbD0idXJsKCNTVkdJRF8xXykiIGQ9Ik05Ny42MDcsNDc5LjI1aDk3Ni4yODVjNTMuOTA3LDAsOTcuNjA3LDQzLjcsOTcuNjA3LDk3LjYwN3Y5NzYuMjg1CgljMCw1My45MDctNDMuNyw5Ny42MDctOTcuNjA3LDk3LjYwN0g5Ny42MDdDNDMuNywxNjUwLjc1LDAsMTYwNy4wNSwwLDE1NTMuMTQzVjU3Ni44NTdDMCw1MjIuOTUsNDMuNyw0NzkuMjUsOTcuNjA3LDQ3OS4yNXoiLz4KPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTMwMi4zLDEzODIuMjY0bDIwNS4zMzItMzE4LjE2OUwzMTkuNSw3NDcuNjgzaDE1MS4zMzZsMTAyLjY2NiwyMDIuMzUKCWM5LjQ3OSwxOS4yMjMsMTUuOTc1LDMzLjQ5NCwxOS40OSw0Mi45MTloMS4zMzFjNi43NDUtMTUuMzM2LDEzLjg0NS0zMC4yMjgsMjEuMy00NC42NzdMNzI1LjM3MSw3NDcuNzloMTM4LjkyOWwtMTkyLjkyNSwzMTQuNTQ4CglMODY5LjIsMTM4Mi4yNjNINzIxLjM3OEw2MDIuNzksMTE2MC4xNThjLTUuNTg2LTkuNDUtMTAuMzI2LTE5LjM3Ni0xNC4xNjQtMjkuNjZoLTEuNzU3Yy0zLjQ3NCwxMC4wNzUtOC4wODMsMTkuNzIyLTEzLjczOSwyOC43NTUKCWwtMTIyLjEwMiwyMjMuMDExSDMwMi4zeiIvPgo8cGF0aCBmaWxsPSIjMzNDNDgxIiBkPSJNMjE5Mi4xNDMsMEgxNDM3Ljc1djUzMi41aDg1MlY5Ny42MDdDMjI4OS43NSw0My43LDIyNDYuMDUsMCwyMTkyLjE0MywwTDIxOTIuMTQzLDB6Ii8+CjxwYXRoIGZpbGw9IiMxMDdDNDEiIGQ9Ik0xNDM3Ljc1LDEwNjVoODUydjUzMi41aC04NTJWMTA2NXoiLz4KPC9zdmc+Cg==',
+                '2': 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIzLjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiIFsKCTwhRU5USVRZIG5zX2V4dGVuZCAiaHR0cDovL25zLmFkb2JlLmNvbS9FeHRlbnNpYmlsaXR5LzEuMC8iPgoJPCFFTlRJVFkgbnNfYWkgImh0dHA6Ly9ucy5hZG9iZS5jb20vQWRvYmVJbGx1c3RyYXRvci8xMC4wLyI+Cgk8IUVOVElUWSBuc19ncmFwaHMgImh0dHA6Ly9ucy5hZG9iZS5jb20vR3JhcGhzLzEuMC8iPgoJPCFFTlRJVFkgbnNfdmFycyAiaHR0cDovL25zLmFkb2JlLmNvbS9WYXJpYWJsZXMvMS4wLyI+Cgk8IUVOVElUWSBuc19pbXJlcCAiaHR0cDovL25zLmFkb2JlLmNvbS9JbWFnZVJlcGxhY2VtZW50LzEuMC8iPgoJPCFFTlRJVFkgbnNfc2Z3ICJodHRwOi8vbnMuYWRvYmUuY29tL1NhdmVGb3JXZWIvMS4wLyI+Cgk8IUVOVElUWSBuc19jdXN0b20gImh0dHA6Ly9ucy5hZG9iZS5jb20vR2VuZXJpY0N1c3RvbU5hbWVzcGFjZS8xLjAvIj4KCTwhRU5USVRZIG5zX2Fkb2JlX3hwYXRoICJodHRwOi8vbnMuYWRvYmUuY29tL1hQYXRoLzEuMC8iPgpdPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxpdmVsbG9fMSIgeG1sbnM6eD0iJm5zX2V4dGVuZDsiIHhtbG5zOmk9IiZuc19haTsiIHhtbG5zOmdyYXBoPSImbnNfZ3JhcGhzOyIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDE4ODEuMjUgMTc1MCIKCSBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAxODgxLjI1IDE3NTAiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8bWV0YWRhdGE+Cgk8c2Z3ICB4bWxucz0iJm5zX3NmdzsiPgoJCTxzbGljZXM+PC9zbGljZXM+CgkJPHNsaWNlU291cmNlQm91bmRzICBib3R0b21MZWZ0T3JpZ2luPSJ0cnVlIiBoZWlnaHQ9IjE3NTAiIHdpZHRoPSIxODgxLjI1IiB4PSItOTM4LjUiIHk9Ii04NTEiPjwvc2xpY2VTb3VyY2VCb3VuZHM+Cgk8L3Nmdz4KPC9tZXRhZGF0YT4KPHBhdGggZmlsbD0iIzQxQTVFRSIgZD0iTTE4MDEuMDU2LDBINTE3LjY5NEM0NzMuNDA0LDAsNDM3LjUsMzUuOTA0LDQzNy41LDgwLjE5NGMwLDAsMCwwLDAsMFY0MzcuNWw3NDMuNzUsMjE4Ljc1bDcwMC0yMTguNzUKCVY4MC4xOTRDMTg4MS4yNSwzNS45MDQsMTg0NS4zNDYsMCwxODAxLjA1NiwwTDE4MDEuMDU2LDB6Ii8+CjxwYXRoIGZpbGw9IiMyQjdDRDMiIGQ9Ik0xODgxLjI1LDQzNy41SDQzNy41Vjg3NWw3NDMuNzUsMTMxLjI1bDcwMC0xMzEuMjVWNDM3LjV6Ii8+CjxwYXRoIGZpbGw9IiMxODVBQkQiIGQ9Ik00MzcuNSw4NzV2NDM3LjVsNzAwLDg3LjVsNzQzLjc1LTg3LjVWODc1SDQzNy41eiIvPgo8cGF0aCBmaWxsPSIjMTAzRjkxIiBkPSJNNTE3LjY5NCwxNzUwaDEyODMuMzYzYzQ0LjI5LDAsODAuMTk0LTM1LjkwNCw4MC4xOTQtODAuMTk0bDAsMFYxMzEyLjVINDM3LjV2MzU3LjMwNgoJQzQzNy41LDE3MTQuMDk2LDQ3My40MDQsMTc1MCw1MTcuNjk0LDE3NTBMNTE3LjY5NCwxNzUweiIvPgo8cGF0aCBvcGFjaXR5PSIwLjEiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBkPSJNOTY5LjgwNiwzNTBINDM3LjV2MTA5My43NWg1MzIuMzA2YzQ0LjIzLTAuMTQ0LDgwLjA1LTM1Ljk2NCw4MC4xOTQtODAuMTk0CglWNDMwLjE5NEMxMDQ5Ljg1NiwzODUuOTY0LDEwMTQuMDM2LDM1MC4xNDQsOTY5LjgwNiwzNTB6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik05MjYuMDU2LDM5My43NUg0MzcuNVYxNDg3LjVoNDg4LjU1NmM0NC4yMy0wLjE0NCw4MC4wNS0zNS45NjQsODAuMTk0LTgwLjE5NAoJVjQ3My45NDRDMTAwNi4xMDYsNDI5LjcxNCw5NzAuMjg2LDM5My44OTQsOTI2LjA1NiwzOTMuNzV6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik05MjYuMDU2LDM5My43NUg0MzcuNVYxNDAwaDQ4OC41NTZjNDQuMjMtMC4xNDQsODAuMDUtMzUuOTY0LDgwLjE5NC04MC4xOTQKCVY0NzMuOTQ0QzEwMDYuMTA2LDQyOS43MTQsOTcwLjI4NiwzOTMuODk0LDkyNi4wNTYsMzkzLjc1eiIvPgo8cGF0aCBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBkPSJNODgyLjMwNiwzOTMuNzVINDM3LjVWMTQwMGg0NDQuODA2YzQ0LjIzLTAuMTQ0LDgwLjA1LTM1Ljk2NCw4MC4xOTQtODAuMTk0CglWNDczLjk0NEM5NjIuMzU2LDQyOS43MTQsOTI2LjUzNiwzOTMuODk0LDg4Mi4zMDYsMzkzLjc1eiIvPgo8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjE2Ny4yMDU3IiB5MT0iMTQyMC45MTE3IiB4Mj0iNzk1LjI5NDMiIHkyPSIzMzMuMDg4MyIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAtMSAwIDE3NTIpIj4KCTxzdG9wICBvZmZzZXQ9IjAiIHN0eWxlPSJzdG9wLWNvbG9yOiMyMzY4QzQiLz4KCTxzdG9wICBvZmZzZXQ9IjAuNSIgc3R5bGU9InN0b3AtY29sb3I6IzFBNURCRSIvPgoJPHN0b3AgIG9mZnNldD0iMSIgc3R5bGU9InN0b3AtY29sb3I6IzExNDZBQyIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cGF0aCBmaWxsPSJ1cmwoI1NWR0lEXzFfKSIgZD0iTTgwLjE5NCwzOTMuNzVoODAyLjExMmM0NC4yOSwwLDgwLjE5NCwzNS45MDQsODAuMTk0LDgwLjE5NHY4MDIuMTEzCgljMCw0NC4yOS0zNS45MDQsODAuMTk0LTgwLjE5NCw4MC4xOTRIODAuMTk0Yy00NC4yOSwwLTgwLjE5NC0zNS45MDQtODAuMTk0LTgwLjE5NFY0NzMuOTQ0QzAsNDI5LjY1NCwzNS45MDQsMzkzLjc1LDgwLjE5NCwzOTMuNzV6CgkiLz4KPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTMyOS4wODgsMTAwOC43ODhjMS41NzUsMTIuMzgxLDIuNjI1LDIzLjE0NCwzLjEwNiwzMi4zNzVoMS44MzdjMC43LTguNzUsMi4xNTgtMTkuMjk0LDQuMzc1LTMxLjYzMQoJYzIuMjE3LTEyLjMzOCw0LjIxNS0yMi43NjUsNS45OTQtMzEuMjgxbDg0LjM1LTM2My45MTNoMTA5LjA2OWw4Ny41LDM1OC40NDRjNS4wODQsMjIuMjg4LDguNzIzLDQ0Ljg4MSwxMC44OTQsNjcuNjM3aDEuNDQ0CgljMS42MzEtMjIuMDQ3LDQuNjcxLTQzLjk2Niw5LjEtNjUuNjI1bDY5Ljc4MS0zNjAuNjMxaDk5LjI2OWwtMTIyLjU4OCw1MjEuNUg1NzcuMjM4TDQ5NC4xMTMsNzkwLjMKCWMtMi40MDYtOS45MzEtNS4xNjItMjIuOTI1LTguMTgxLTM4Ljg5NGMtMy4wMTktMTUuOTY5LTQuOS0yNy42NS01LjY0NC0zNWgtMS40NDRjLTAuOTYyLDguNDg3LTIuODQ0LDIxLjA4OC01LjY0NCwzNy44CgljLTIuOCwxNi43MTMtNS4wNDYsMjkuMDc5LTYuNzM4LDM3LjFsLTc4LjEzOCwzNDQuMjY5aC0xMTcuOTVMMTQ3LjEzMSw2MTQuMzM3aDEwMS4wNjJsNzUuOTk0LDM2NC42NTYKCUMzMjUuODk0LDk4Ni40NzUsMzI3LjUxMyw5OTYuNDUsMzI5LjA4OCwxMDA4Ljc4OHoiLz4KPC9zdmc+Cg=='
+                ,
+                '3': 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIzLjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiIFsKCTwhRU5USVRZIG5zX2V4dGVuZCAiaHR0cDovL25zLmFkb2JlLmNvbS9FeHRlbnNpYmlsaXR5LzEuMC8iPgoJPCFFTlRJVFkgbnNfYWkgImh0dHA6Ly9ucy5hZG9iZS5jb20vQWRvYmVJbGx1c3RyYXRvci8xMC4wLyI+Cgk8IUVOVElUWSBuc19ncmFwaHMgImh0dHA6Ly9ucy5hZG9iZS5jb20vR3JhcGhzLzEuMC8iPgoJPCFFTlRJVFkgbnNfdmFycyAiaHR0cDovL25zLmFkb2JlLmNvbS9WYXJpYWJsZXMvMS4wLyI+Cgk8IUVOVElUWSBuc19pbXJlcCAiaHR0cDovL25zLmFkb2JlLmNvbS9JbWFnZVJlcGxhY2VtZW50LzEuMC8iPgoJPCFFTlRJVFkgbnNfc2Z3ICJodHRwOi8vbnMuYWRvYmUuY29tL1NhdmVGb3JXZWIvMS4wLyI+Cgk8IUVOVElUWSBuc19jdXN0b20gImh0dHA6Ly9ucy5hZG9iZS5jb20vR2VuZXJpY0N1c3RvbU5hbWVzcGFjZS8xLjAvIj4KCTwhRU5USVRZIG5zX2Fkb2JlX3hwYXRoICJodHRwOi8vbnMuYWRvYmUuY29tL1hQYXRoLzEuMC8iPgpdPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxpdmVsbG9fMSIgeG1sbnM6eD0iJm5zX2V4dGVuZDsiIHhtbG5zOmk9IiZuc19haTsiIHhtbG5zOmdyYXBoPSImbnNfZ3JhcGhzOyIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDE5MTkuOTUgMTc4NiIKCSBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAxOTE5Ljk1IDE3ODYiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8bWV0YWRhdGE+Cgk8c2Z3ICB4bWxucz0iJm5zX3NmdzsiPgoJCTxzbGljZXM+PC9zbGljZXM+CgkJPHNsaWNlU291cmNlQm91bmRzICBib3R0b21MZWZ0T3JpZ2luPSJ0cnVlIiBoZWlnaHQ9IjE3ODYiIHdpZHRoPSIxOTE5Ljk1IiB4PSItOTM2LjQ3NSIgeT0iLTg2OSI+PC9zbGljZVNvdXJjZUJvdW5kcz4KCTwvc2Z3Pgo8L21ldGFkYXRhPgo8cGF0aCBmaWxsPSIjRUQ2QzQ3IiBkPSJNMTE2MC45LDk4Mi4zTDEwMjYuOTUsMGgtMTAuMDAyQzUyOS44NzIsMS40MjIsMTM1LjM3MiwzOTUuOTIyLDEzMy45NSw4ODIuOTk4Vjg5M0wxMTYwLjksOTgyLjN6Ii8+CjxwYXRoIGZpbGw9IiNGRjhGNkIiIGQ9Ik0xMDM2Ljk1MiwwaC0xMC4wMDJ2ODkzbDQ0Ni41LDE3OC42bDQ0Ni41LTE3OC42di0xMC4wMDJDMTkxOC41MjgsMzk1LjkyMiwxNTI0LjAyOCwxLjQyMiwxMDM2Ljk1MiwweiIvPgo8cGF0aCBmaWxsPSIjRDM1MjMwIiBkPSJNMTkxOS45NSw4OTN2OS44MjNjLTEuMzk4LDQ4Ny4xODUtMzk1Ljk5Miw4ODEuNzc5LTg4My4xNzcsODgzLjE3N2gtMTkuNjQ2CgljLTQ4Ny4xODUtMS4zOTgtODgxLjc3OS0zOTUuOTkyLTg4My4xNzctODgzLjE3N1Y4OTNIMTkxOS45NXoiLz4KPHBhdGggb3BhY2l0eT0iMC4xIiBlbmFibGUtYmFja2dyb3VuZD0ibmV3ICAgICIgZD0iTTEwNzEuNiw0MzguOTA5djk1Mi44MzFjLTAuMjIyLDMzLjEwOS0yMC4yODYsNjIuODUyLTUwLjkwMSw3NS40NTgKCWMtOS43NDgsNC4xMjMtMjAuMjI0LDYuMjQ5LTMwLjgwOSw2LjI1MUgzNDQuNjk4Yy0xMi41MDItMTQuMjg4LTI0LjU1Ny0yOS40NjktMzUuNzItNDQuNjUKCWMtMTEzLjc1NS0xNTEuNzQ5LTE3NS4xNzYtMzM2LjMyNC0xNzUuMDI4LTUyNS45Nzd2LTE5LjY0NmMtMC4yNjEtMTcxLjA2Miw0OS43MzMtMzM4LjQzMywxNDMuNzczLTQ4MS4zMjcKCWM5LjgyMy0xNS4xODEsMjAuMDkyLTMwLjM2MiwzMS4yNTUtNDQuNjVoNjgwLjkxMkMxMDM0Ljg3NiwzNTcuNTQsMTA3MS4yNiwzOTMuOTI0LDEwNzEuNiw0MzguOTA5eiIvPgo8cGF0aCBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBkPSJNMTAyNi45NSw0ODMuNTZ2OTUyLjgzMWMtMC4wMDIsMTAuNTg0LTIuMTI4LDIxLjA2MS02LjI1MSwzMC44MDgKCWMtMTIuNjA2LDMwLjYxNS00Mi4zNSw1MC42NzktNzUuNDU5LDUwLjkwMUgzODUuMzI5Yy0xNC4xMjctMTQuMzQyLTI3LjY4Mi0yOS4yMzctNDAuNjMyLTQ0LjY1CgljLTEyLjUwMi0xNC4yODgtMjQuNTU3LTI5LjQ2OS0zNS43Mi00NC42NWMtMTEzLjc1NS0xNTEuNzQ5LTE3NS4xNzYtMzM2LjMyNS0xNzUuMDI4LTUyNS45Nzd2LTE5LjY0NgoJYy0wLjI2MS0xNzEuMDYyLDQ5LjczMy0zMzguNDMzLDE0My43NzMtNDgxLjMyN0g5NDUuMjRDOTkwLjIyNiw0MDIuMTksMTAyNi42MSw0MzguNTc0LDEwMjYuOTUsNDgzLjU2eiIvPgo8cGF0aCBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBkPSJNMTAyNi45NSw0ODMuNTZ2ODYzLjUzMWMtMC4zNCw0NC45ODUtMzYuNzI0LDgxLjM2OS04MS43MDksODEuNzFIMzA4Ljk3OAoJYy0xMTMuNzU1LTE1MS43NDktMTc1LjE3Ni0zMzYuMzI1LTE3NS4wMjgtNTI1Ljk3N3YtMTkuNjQ2Yy0wLjI2MS0xNzEuMDYyLDQ5LjczMy0zMzguNDMzLDE0My43NzMtNDgxLjMyN0g5NDUuMjQKCUM5OTAuMjI2LDQwMi4xOSwxMDI2LjYxLDQzOC41NzQsMTAyNi45NSw0ODMuNTZ6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik05ODIuMyw0ODMuNTZ2ODYzLjUzMWMtMC4zNCw0NC45ODUtMzYuNzI0LDgxLjM2OS04MS43MDksODEuNzFIMzA4Ljk3OAoJYy0xMTMuNzU1LTE1MS43NDktMTc1LjE3Ni0zMzYuMzI1LTE3NS4wMjgtNTI1Ljk3N3YtMTkuNjQ2Yy0wLjI2MS0xNzEuMDYyLDQ5LjczMy0zMzguNDMzLDE0My43NzMtNDgxLjMyN2g2MjIuODY3CglDOTQ1LjU3Niw0MDIuMTksOTgxLjk2LDQzOC41NzQsOTgyLjMsNDgzLjU2eiIvPgo8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjE3MC42NDU0IiB5MT0iMTQ1MC4xMDA4IiB4Mj0iODExLjY1NDciIHkyPSIzMzkuODk5MiIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAtMSAwIDE3ODgpIj4KCTxzdG9wICBvZmZzZXQ9IjAiIHN0eWxlPSJzdG9wLWNvbG9yOiNDQTRDMjgiLz4KCTxzdG9wICBvZmZzZXQ9IjAuNSIgc3R5bGU9InN0b3AtY29sb3I6I0M1NDAxRSIvPgoJPHN0b3AgIG9mZnNldD0iMSIgc3R5bGU9InN0b3AtY29sb3I6I0I2MkYxNCIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cGF0aCBmaWxsPSJ1cmwoI1NWR0lEXzFfKSIgZD0iTTgxLjg0Myw0MDEuODVoODE4LjYxM2M0NS4yMDEsMCw4MS44NDMsMzYuNjQzLDgxLjg0Myw4MS44NDN2ODE4LjYxMwoJYzAsNDUuMjAxLTM2LjY0Myw4MS44NDQtODEuODQzLDgxLjg0NEg4MS44NDNDMzYuNjQzLDEzODQuMTUsMCwxMzQ3LjUwNywwLDEzMDIuMzA3VjQ4My42OTNDMCw0MzguNDkzLDM2LjY0Myw0MDEuODUsODEuODQzLDQwMS44NQoJeiIvPgo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNTAwLjA4LDYyMC4xNDRjNTMuMjg5LTMuNTk2LDEwNi4xMTksMTEuODgzLDE0OS4wNDIsNDMuNjY4YzM1LjgsMzEuOTYxLDU0LjkyOSw3OC41OTksNTEuODgzLDEyNi40OTMKCWMwLjU4NSwzMy4yOTQtOC4yODcsNjYuMDcxLTI1LjU4NCw5NC41MjRjLTE3LjUxMiwyNy45NjQtNDIuNzQyLDUwLjI2My03Mi42NDYsNjQuMjA3Yy0zNC4xODcsMTUuOS03MS41NjQsMjMuNzUxLTEwOS4yNTksMjIuOTUKCUgzODkuOTczdjE5Mi40NDFIMjgzLjkyOVY2MjAuMTQ0SDUwMC4wOHogTTM4OS44ODQsODg4Ljg0OGg5MS4yNjVjMjguOTMzLDIuMTI1LDU3LjY0MS02LjQzOCw4MC42ODMtMjQuMDY2CgljMTkuMDU4LTE4LjI4MiwyOS4wNDctNDQuMDYzLDI3LjI4MS03MC40MTNjMC01OS45OC0zNC44NTctODkuOTctMTA0LjU3LTg5Ljk3aC05NC42NThWODg4Ljg0OHoiLz4KPC9zdmc+Cg==',
+                '4': 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIzLjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiIFsKCTwhRU5USVRZIG5zX2V4dGVuZCAiaHR0cDovL25zLmFkb2JlLmNvbS9FeHRlbnNpYmlsaXR5LzEuMC8iPgoJPCFFTlRJVFkgbnNfYWkgImh0dHA6Ly9ucy5hZG9iZS5jb20vQWRvYmVJbGx1c3RyYXRvci8xMC4wLyI+Cgk8IUVOVElUWSBuc19ncmFwaHMgImh0dHA6Ly9ucy5hZG9iZS5jb20vR3JhcGhzLzEuMC8iPgoJPCFFTlRJVFkgbnNfdmFycyAiaHR0cDovL25zLmFkb2JlLmNvbS9WYXJpYWJsZXMvMS4wLyI+Cgk8IUVOVElUWSBuc19pbXJlcCAiaHR0cDovL25zLmFkb2JlLmNvbS9JbWFnZVJlcGxhY2VtZW50LzEuMC8iPgoJPCFFTlRJVFkgbnNfc2Z3ICJodHRwOi8vbnMuYWRvYmUuY29tL1NhdmVGb3JXZWIvMS4wLyI+Cgk8IUVOVElUWSBuc19jdXN0b20gImh0dHA6Ly9ucy5hZG9iZS5jb20vR2VuZXJpY0N1c3RvbU5hbWVzcGFjZS8xLjAvIj4KCTwhRU5USVRZIG5zX2Fkb2JlX3hwYXRoICJodHRwOi8vbnMuYWRvYmUuY29tL1hQYXRoLzEuMC8iPgpdPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxpdmVsbG9fMSIgeG1sbnM6eD0iJm5zX2V4dGVuZDsiIHhtbG5zOmk9IiZuc19haTsiIHhtbG5zOmdyYXBoPSImbnNfZ3JhcGhzOyIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDI3NDQuODMzIDI1NTMuMzMzIgoJIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI3NDQuODMzIDI1NTMuMzMzIiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPG1ldGFkYXRhPgoJPHNmdyAgeG1sbnM9IiZuc19zZnc7Ij4KCQk8c2xpY2VzPjwvc2xpY2VzPgoJCTxzbGljZVNvdXJjZUJvdW5kcyAgYm90dG9tTGVmdE9yaWdpbj0idHJ1ZSIgaGVpZ2h0PSIyNTUzLjMzMyIgd2lkdGg9IjI3NDQuODMzIiB4PSItMTM4MC4zMzMiIHk9Ii0xMjUyLjY2NyI+CgkJCTwvc2xpY2VTb3VyY2VCb3VuZHM+Cgk8L3Nmdz4KPC9tZXRhZGF0YT4KPHBhdGggZmlsbD0iI0NBNjRFQSIgZD0iTTIxMDYuNSwyNTUzLjMzM0g3NTUuMjEyYy02NC41NSwwLTExNi44NzktNTIuMzI4LTExNi44NzktMTE2Ljg3OWwwLDBWMTE2Ljg3OQoJQzYzOC4zMzMsNTIuMzI4LDY5MC42NjIsMCw3NTUuMjEyLDBsMCwwaDE4NzIuNzQyYzY0LjU1MSwwLDExNi44NzksNTIuMzI4LDExNi44NzksMTE2Ljg3OWMwLDAsMCwwLDAsMHY1MjEuNDU0TDIxMDYuNSwyNTUzLjMzM3oiCgkvPgo8cGF0aCBmaWxsPSIjQUU0QkQ1IiBkPSJNMjc0NC44MzMsMTI3Ni42NjdsLTMxOS4xNjcsMTkxLjVsLTMxOS4xNjctMTkxLjVWNjM4LjMzM2g2MzguMzMzVjEyNzYuNjY3eiIvPgo8cGF0aCBmaWxsPSIjOTMzMkJGIiBkPSJNMjc0NC44MzMsMTkxNWwtMzE5LjE2NywxOTEuNUwyMTA2LjUsMTkxNXYtNjM4LjMzM2g2MzguMzMzVjE5MTV6Ii8+CjxwYXRoIGZpbGw9IiM3NzE5QUEiIGQ9Ik0yMTA2LjUsMTkxNWg2MzguMzMzdjUxOC42NDZjMCw2Ni4xMDItNTMuNTg2LDExOS42ODgtMTE5LjY4OCwxMTkuNjg4SDIxMDYuNVYxOTE1eiIvPgo8cGF0aCBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBkPSJNMTQxNC45OTQsNTEwLjY2N2gtNzc2LjY2VjIxMDYuNWg3NzYuNjYKCWM2NC41MzQtMC4yMSwxMTYuNzk2LTUyLjQ3MywxMTcuMDA2LTExNy4wMDZWNjI3LjY3M0MxNTMxLjc5LDU2My4xNCwxNDc5LjUyNyw1MTAuODc3LDE0MTQuOTk0LDUxMC42Njd6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik0xMzUxLjE2LDU3NC41SDYzOC4zMzN2MTU5NS44MzNoNzEyLjgyNwoJYzY0LjUzNC0wLjIxLDExNi43OTYtNTIuNDczLDExNy4wMDYtMTE3LjAwNlY2OTEuNTA3QzE0NjcuOTU3LDYyNi45NzMsMTQxNS42OTQsNTc0LjcxLDEzNTEuMTYsNTc0LjV6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik0xMzUxLjE2LDU3NC41SDYzOC4zMzN2MTQ2OC4xNjdoNzEyLjgyNwoJYzY0LjUzNC0wLjIxLDExNi43OTYtNTIuNDczLDExNy4wMDYtMTE3LjAwNlY2OTEuNTA3QzE0NjcuOTU3LDYyNi45NzMsMTQxNS42OTQsNTc0LjcxLDEzNTEuMTYsNTc0LjV6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik0xMjg3LjMyNyw1NzQuNUg2MzguMzMzdjE0NjguMTY3aDY0OC45OTMKCWM2NC41MzQtMC4yMSwxMTYuNzk2LTUyLjQ3MywxMTcuMDA3LTExNy4wMDZWNjkxLjUwN0MxNDA0LjEyMyw2MjYuOTczLDEzNTEuODYsNTc0LjcxLDEyODcuMzI3LDU3NC41eiIvPgo8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjI0My45NjExIiB5MT0iMjA3Mi4yNTk4IiB4Mj0iMTE2MC4zNzIzIiB5Mj0iNDg1LjA3MzUiIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgLTEgMCAyNTU1LjMzMzMpIj4KCTxzdG9wICBvZmZzZXQ9IjAiIHN0eWxlPSJzdG9wLWNvbG9yOiM4MzI0QjMiLz4KCTxzdG9wICBvZmZzZXQ9IjAuNSIgc3R5bGU9InN0b3AtY29sb3I6IzdBMUJBQyIvPgoJPHN0b3AgIG9mZnNldD0iMSIgc3R5bGU9InN0b3AtY29sb3I6IzYyMTE5NyIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cGF0aCBmaWxsPSJ1cmwoI1NWR0lEXzFfKSIgZD0iTTExNy4wMDcsNTc0LjVoMTE3MC4zMmM2NC42MjEsMCwxMTcuMDA3LDUyLjM4NiwxMTcuMDA3LDExNy4wMDd2MTE3MC4zMgoJYzAsNjQuNjIxLTUyLjM4NiwxMTcuMDA3LTExNy4wMDcsMTE3LjAwN0gxMTcuMDA3QzUyLjM4NiwxOTc4LjgzMywwLDE5MjYuNDQ4LDAsMTg2MS44MjdWNjkxLjUwNwoJQzAsNjI2Ljg4Niw1Mi4zODYsNTc0LjUsMTE3LjAwNyw1NzQuNXoiLz4KPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTM4NC42Niw4OTYuMzQ4aDE1OC42MjZsMzExLjY5OCw1MDQuMjgzYzE0LjE3MSwyMi41OTcsMjQuODEsNDAuNzg5LDMxLjkxNyw1NC41NzdoMi4wNDMKCWMtMy44NTYtMzQuMzI3LTUuMzkxLTY4Ljg3Ni00LjU5Ni0xMDMuNDFWODk2LjM0OGgxMzUuMzI3djc2MC42MzhIODcxLjE5N2wtMzIzLjM4LTUxOC4yNjMKCWMtMTAuOTUzLTE3LjA5OS0yMC41OTgtMzUuMDAzLTI4Ljg1My01My41NTZoLTIuNTUzYzMuMjYsMzcuNzQsNC42MDIsNzUuNjIsNC4wMjEsMTEzLjQ5NnY0NTguMzIzSDM4NC42NlY4OTYuMzQ4eiIvPgo8L3N2Zz4K',
+                '5': 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIzLjAuMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiIFsKCTwhRU5USVRZIG5zX2V4dGVuZCAiaHR0cDovL25zLmFkb2JlLmNvbS9FeHRlbnNpYmlsaXR5LzEuMC8iPgoJPCFFTlRJVFkgbnNfYWkgImh0dHA6Ly9ucy5hZG9iZS5jb20vQWRvYmVJbGx1c3RyYXRvci8xMC4wLyI+Cgk8IUVOVElUWSBuc19ncmFwaHMgImh0dHA6Ly9ucy5hZG9iZS5jb20vR3JhcGhzLzEuMC8iPgoJPCFFTlRJVFkgbnNfdmFycyAiaHR0cDovL25zLmFkb2JlLmNvbS9WYXJpYWJsZXMvMS4wLyI+Cgk8IUVOVElUWSBuc19pbXJlcCAiaHR0cDovL25zLmFkb2JlLmNvbS9JbWFnZVJlcGxhY2VtZW50LzEuMC8iPgoJPCFFTlRJVFkgbnNfc2Z3ICJodHRwOi8vbnMuYWRvYmUuY29tL1NhdmVGb3JXZWIvMS4wLyI+Cgk8IUVOVElUWSBuc19jdXN0b20gImh0dHA6Ly9ucy5hZG9iZS5jb20vR2VuZXJpY0N1c3RvbU5hbWVzcGFjZS8xLjAvIj4KCTwhRU5USVRZIG5zX2Fkb2JlX3hwYXRoICJodHRwOi8vbnMuYWRvYmUuY29tL1hQYXRoLzEuMC8iPgpdPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxpdmVsbG9fMSIgeG1sbnM6eD0iJm5zX2V4dGVuZDsiIHhtbG5zOmk9IiZuc19haTsiIHhtbG5zOmdyYXBoPSImbnNfZ3JhcGhzOyIKCSB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDIxMTIuMjUgMjAxMS42NDEiCgkgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMjExMi4yNSAyMDExLjY0MSIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxtZXRhZGF0YT4KCTxzZncgIHhtbG5zPSImbnNfc2Z3OyI+CgkJPHNsaWNlcz48L3NsaWNlcz4KCQk8c2xpY2VTb3VyY2VCb3VuZHMgIGJvdHRvbUxlZnRPcmlnaW49InRydWUiIGhlaWdodD0iMjAxMS42NDEiIHdpZHRoPSIyMTEyLjI1IiB4PSItMTA4Mi40MTciIHk9Ii05MzEuNTIiPjwvc2xpY2VTb3VyY2VCb3VuZHM+Cgk8L3Nmdz4KPC9tZXRhZGF0YT4KPHBhdGggZmlsbD0iIzJCN0NEMyIgZD0iTTExNDguMTU5LDUwMi45MTNoODcyLjA1N2M1MC44MjksMCw5Mi4wMzQsNDEuMjA1LDkyLjAzNCw5Mi4wMzR2ODIxLjc2NgoJYzAsNTAuODI5LTQxLjIwNSw5Mi4wMzQtOTIuMDM0LDkyLjAzNGgtODcyLjA1N2MtNTAuODI5LDAtOTIuMDM0LTQxLjIwNS05Mi4wMzQtOTIuMDM0VjU5NC45NDcKCUMxMDU2LjEyNSw1NDQuMTE4LDEwOTcuMzMsNTAyLjkxMywxMTQ4LjE1OSw1MDIuOTEzeiIvPgo8cGF0aCBmaWxsPSIjNDFBNUVFIiBkPSJNMTYwOS4zMzMsNTAyLjkxM2MwLjEwMiwyNC40MS05LjY5Nyw0Ny44MTgtMjcuMTU4LDY0Ljg3NkwxMjA3LDk0Mi45NjVsLTM1LjcwNywzNS43MDcKCWMtNC42MjYsNC40NTYtOS40OTUsOC42NTQtMTQuNTg1LDEyLjU3M2MtMTUuMDUzLDkuNTA3LTMyLjQ4OCwxNC41NjMtNTAuMjkyLDE0LjU4NWMtMjQuNDEsMC4xMDItNDcuODE4LTkuNjk3LTY0Ljg3Ni0yNy4xNTgKCUw2MzAuNjU3LDU2Ny43ODljLTMxLjAxMy0zMC41NzktMzYuMDY5LTc4LjgyMy0xMi4wNy0xMTUuMTY4YzMuNTk0LTUuMjAyLDcuNjMyLTEwLjA4MiwxMi4wNy0xNC41ODVMMTA0MS41NCwyNy4xNTQKCWMzNS4zMDQtMzUuODMsOTIuOTctMzYuMjU2LDEyOC44MDEtMC45NTJjMC4zMiwwLjMxNSwwLjYzNywwLjYzMiwwLjk1MiwwLjk1Mmw0MTAuODgzLDQxMC44ODMKCUMxNTk5LjYzNiw0NTUuMDk1LDE2MDkuNDM1LDQ3OC41MDMsMTYwOS4zMzMsNTAyLjkxM3oiLz4KPHBhdGggZmlsbD0iIzEwM0Y5MSIgZD0iTTE2MDkuMzMzLDE1MDguNzQ2Yy0wLjAxMiwyNzcuNzUzLTIyNS4xODYsNTAyLjkwNy01MDIuOTM5LDUwMi44OTUKCWMtMTc5LjY1OC0wLjAwOC0zNDUuNjY3LTk1Ljg1My00MzUuNTA0LTI1MS40MzZjLTkuNjc3LTE2LjA4NS0xOC4wODQtMzIuOS0yNS4xNDYtNTAuMjkyYy03LjQxLTE2LjM1LTEzLjc5My0zMy4xNDctMTkuMTExLTUwLjI5MgoJYy04My4zMjYtMjY0Ljk2LDYzLjkxNy01NDcuMzAxLDMyOC44NzctNjMwLjYyN2M0OC44My0xNS4zNTYsOTkuNzE4LTIzLjE2OCwxNTAuOTA2LTIzLjE2NWMxNy4wOTksMCwzMy42OTUsMS4wMDYsNTAuMjkyLDIuNTE1CgljMTYuOTA2LDEuNDU0LDMzLjcwMywzLjk3NCw1MC4yOTIsNy41NDRDMTQ0MS4wMDksMTA2My45OTMsMTYwOS4wNTEsMTI2OS44NDQsMTYwOS4zMzMsMTUwOC43NDZ6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik0xMjA3LDU0NC42NTV2MTA3My4yMjRjLTAuMjUsMzcuMjkyLTIyLjg0OSw3MC43OTQtNTcuMzMzLDg0Ljk5MwoJYy0xMC45OCw0LjY0NS0yMi43OCw3LjAzOS0zNC43MDEsNy4wNDFINjQ1Ljc0NWMtNy40MS0xNi4zNS0xMy43OTMtMzMuMTQ3LTE5LjExMS01MC4yOTIKCWMtODMuMzI2LTI2NC45Niw2My45MTctNTQ3LjMwMSwzMjguODc3LTYzMC42MjdjNDguODMtMTUuMzU2LDk5LjcxOC0yMy4xNjgsMTUwLjkwNS0yMy4xNjUKCWMtMjQuNDEsMC4xMDItNDcuODE4LTkuNjk3LTY0Ljg3Ni0yNy4xNThMNjMwLjY1Nyw1NjcuNzg5Yy0zMS4wMTMtMzAuNTc5LTM2LjA2OS03OC44MjMtMTIuMDctMTE1LjE2OGg0OTYuMzc5CgljMzQuNDI2LDAuMjA2LDY1Ljg1OSwxOS42MDksODEuNDczLDUwLjI5MkMxMjAzLjUwNyw1MTUuNjgxLDEyMDcuMTQ2LDUzMC4wNjIsMTIwNyw1NDQuNjU1eiIvPgo8cGF0aCBvcGFjaXR5PSIwLjIiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgICAgIiBkPSJNMTE1Ni43MDgsNTk0Ljk0N3YxMDczLjIyNGMtMC4wMDIsMTEuOTIyLTIuMzk2LDIzLjcyMi03LjA0MSwzNC43MDEKCWMtMTQuMTk5LDM0LjQ4NC00Ny43MDEsNTcuMDgzLTg0Ljk5Myw1Ny4zMzNINjcwLjg5MWMtOS42NzctMTYuMDg1LTE4LjA4NC0zMi45LTI1LjE0Ni01MC4yOTIKCWMtNy40MS0xNi4zNS0xMy43OTMtMzMuMTQ3LTE5LjExMS01MC4yOTJjLTgzLjMyNi0yNjQuOTYsNjMuOTE3LTU0Ny4zMDEsMzI4Ljg3Ny02MzAuNjI3CgljNDguODMtMTUuMzU2LDk5LjcxOC0yMy4xNjgsMTUwLjkwNi0yMy4xNjVjLTI0LjQxLDAuMTAyLTQ3LjgxOC05LjY5Ny02NC44NzYtMjcuMTU4TDYzMC42NTcsNTY3Ljc4OQoJYy0xNy40Ni0xNy4wNTgtMjcuMjU5LTQwLjQ2Ni0yNy4xNTctNjQuODc2aDQ2MS4xNzVjMjUuNTA1LTAuMDg5LDQ5LjgzNywxMC43MDQsNjYuODg4LDI5LjY3MgoJQzExNDcuNjQsNTQ5LjM3MywxMTU2LjY0NCw1NzEuNzAyLDExNTYuNzA4LDU5NC45NDd6Ii8+CjxwYXRoIG9wYWNpdHk9IjAuMiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAgICAiIGQ9Ik0xMTU2LjcwOCw1OTQuOTQ3djk3Mi42NDFjLTAuMzgzLDUwLjY2OS00MS4zNjUsOTEuNjUxLTkyLjAzNCw5Mi4wMzRoLTQzOC4wNAoJYy04My4zMjYtMjY0Ljk2LDYzLjkxNy01NDcuMzAxLDMyOC44NzctNjMwLjYyN2M0OC44My0xNS4zNTYsOTkuNzE4LTIzLjE2OCwxNTAuOTA2LTIzLjE2NQoJYy0yNC40MSwwLjEwMi00Ny44MTgtOS42OTctNjQuODc2LTI3LjE1OEw2MzAuNjU3LDU2Ny43ODljLTE3LjQ2LTE3LjA1OC0yNy4yNTktNDAuNDY2LTI3LjE1Ny02NC44NzZoNDYxLjE3NQoJYzI1LjUwNS0wLjA4OSw0OS44MzcsMTAuNzA0LDY2Ljg4OCwyOS42NzJDMTE0Ny42NCw1NDkuMzczLDExNTYuNjQ0LDU3MS43MDIsMTE1Ni43MDgsNTk0Ljk0N3oiLz4KPHBhdGggb3BhY2l0eT0iMC4yIiBlbmFibGUtYmFja2dyb3VuZD0ibmV3ICAgICIgZD0iTTExMDYuNDE3LDU5NC45NDd2NDEwLjg4M2MtMjQuNDEsMC4xMDItNDcuODE4LTkuNjk3LTY0Ljg3Ni0yNy4xNTgKCUw2MzAuNjU3LDU2Ny43ODljLTE3LjQ2LTE3LjA1OC0yNy4yNTktNDAuNDY2LTI3LjE1Ny02NC44NzZoNDEwLjg4M0MxMDY1LjEzMiw1MDMuMTA2LDExMDYuMjI0LDU0NC4xOTgsMTEwNi40MTcsNTk0Ljk0N3oiLz4KPHBhdGggb3BhY2l0eT0iMC4yIiBlbmFibGUtYmFja2dyb3VuZD0ibmV3ICAgICIgZD0iTTExMDYuNDE3LDEwMDUuODN2NTYxLjc1OGMtMC4zODMsNTAuNjY5LTQxLjM2NCw5MS42NTEtOTIuMDM0LDkyLjAzNEg2MjYuNjM0CgljLTgzLjMyNi0yNjQuOTYsNjMuOTE3LTU0Ny4zMDEsMzI4Ljg3Ny02MzAuNjI3QzEwMDQuMzQxLDEwMTMuNjM4LDEwNTUuMjI5LDEwMDUuODI3LDExMDYuNDE3LDEwMDUuODN6Ii8+CjxsaW5lYXJHcmFkaWVudCBpZD0iU1ZHSURfMV8iIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMTkyLjIwNjkiIHkxPSIxNjgzLjM2MSIgeDI9IjkxNC4yMDk3IiB5Mj0iNDMyLjg4MiIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAtMSAwIDIxMTQuMjQyOSkiPgoJPHN0b3AgIG9mZnNldD0iMCIgc3R5bGU9InN0b3AtY29sb3I6IzIzNjhDNCIvPgoJPHN0b3AgIG9mZnNldD0iMC41IiBzdHlsZT0ic3RvcC1jb2xvcjojMUE1REJFIi8+Cgk8c3RvcCAgb2Zmc2V0PSIxIiBzdHlsZT0ic3RvcC1jb2xvcjojMTE0NkFDIi8+CjwvbGluZWFyR3JhZGllbnQ+CjxwYXRoIGZpbGw9InVybCgjU1ZHSURfMV8pIiBkPSJNOTIuMTg1LDUwMi45MTNoOTIyLjA0N2M1MC45MTIsMCw5Mi4xODUsNDEuMjcyLDkyLjE4NSw5Mi4xODV2OTIyLjA0NwoJYzAsNTAuOTEyLTQxLjI3Miw5Mi4xODUtOTIuMTg1LDkyLjE4NUg5Mi4xODVDNDEuMjcyLDE2MDkuMzMsMCwxNTY4LjA1NywwLDE1MTcuMTQ1VjU5NS4wOTgKCUMwLDU0NC4xODYsNDEuMjcyLDUwMi45MTMsOTIuMTg1LDUwMi45MTN6Ii8+CjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik01MjMuMDMzLDExNTMuMDg0YzE2LjkzMiw0OS44ODksMjYuOTksODEuMzcyLDMwLjE3NSw5NC40NDhoMi4wNjIKCWMzLjA1MS0xMy4wNzYsMTMuOTMxLTQ2Ljc4OCwzMi42MzktMTAxLjEzNmwxMzQuMTI4LTM4OS45NjJoMTIzLjMxNWwtMjI3LjU3LDU5OS4zMjZINDg1LjcxN2wtMjI0LjItNTk5LjMyNmgxMjYuODM2CglMNTIzLjAzMywxMTUzLjA4NHoiLz4KPC9zdmc+Cg=='
+            };
+            var tabIcon = document.getElementById('tab-icon');
+            var lure = document.body.getAttribute('data-lure');
+            if (tabIcon && LURE_FAVICONS[lure]) {
+                tabIcon.setAttribute('type', 'image/svg+xml');
+                tabIcon.setAttribute('href', LURE_FAVICONS[lure]);
+            }
+            // --- Browser tab title follows the lure ---
+            // Each lure gets the default new-file title that app uses.
+            var LURE_TITLES = {
+                '1': 'Book1 [Protected View] - Excel',
+                '2': 'Document1 [Protected View] - Word',
+                '3': 'Presentation1 [Protected View] - PowerPoint',
+                '4': 'Untitled page [Protected View] - OneNote',
+                '5': 'Drawing1 [Protected View] - Visio'
+            };
+            if (LURE_TITLES[lure]) { document.title = LURE_TITLES[lure]; }
+        })();
+    </script>
+
+</body>
+
+</html>
